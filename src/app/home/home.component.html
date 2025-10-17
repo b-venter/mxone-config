@@ -14,7 +14,7 @@
                 
             <mat-form-field class="server-field">
               <mat-label>System name</mat-label>
-              <input matInput formControlName="system_name" />
+              <input matInput matTooltip="Optional. Will add system identifier as a comment in config file" formControlName="system_name" />
             </mat-form-field>
             &nbsp;
             <mat-form-field class="server-field">
@@ -429,7 +429,7 @@
                 
             <mat-form-field class="server-field">
               <mat-label>System name</mat-label>
-              <input matInput formControlName="system_name" />
+              <input matInput matTooltip="Optional. Will add system identifier as a comment in config file" formControlName="system_name" />
             </mat-form-field>
             &nbsp;
             <mat-form-field class="server-field">
@@ -658,24 +658,6 @@
                 <br>
 
                 <mat-divider></mat-divider>
-
-                <br>
-                <h3>Services</h3>
-                <mat-checkbox formControlName="lim">Service Node (LIM)?</mat-checkbox>
-                &nbsp;
-                <mat-form-field class="server-field">
-                  <mat-label>LIM no.</mat-label>
-                  <input matInput [readonly]="enableSOLim(j)" type="number" formControlName="limno"/>
-                </mat-form-field>
-                <br>
-                <mat-checkbox formControlName="mediasrv">Media Server?</mat-checkbox>
-                <br>
-                <mat-checkbox matTooltip="Tick to enable Cassandra and enter IP address" formControlName="cass">Cassandra node?</mat-checkbox>
-                &nbsp;
-                <mat-form-field class="server-field">
-                  <mat-label>Cassandra IP</mat-label>
-                  <input matInput [readonly]="enableSOCass(j)" [required]="!enableSOCass(j)" type="string" matTooltip="If IPv6 is used, this address must be IPv6" formControlName="cassip"/>
-                </mat-form-field>
   
               </div>
             </div>
