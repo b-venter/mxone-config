@@ -94,12 +94,10 @@ export class HomeComponent implements OnInit {
 
   banner: string = 
 `# ==========================================================================
-# This is an unofficial tool to assist with the creation of MXONE InstallData
-# files
-# 
-# Open source. Brian Venter
+# This is an open source UNOFFICIAL tool to assist with the creation of
+# Mitel MiVoice MXONE InstallData and ServerData files.
 #
-# Github:
+# Source code on Github: https://github.com/b-venter/mxone-config
 #
 # ==========================================================================`
 
@@ -372,11 +370,6 @@ export class HomeComponent implements OnInit {
       dc: ["", Validators.required], //TODO: add in general, then make available as a list to reduce typos
       rack: ["", Validators.required], //TODO: add in general, then make available as a list to reduce typos and force only 2
       platform: [this.def_platform, Validators.required],
-      lim: [false],
-      limno: [{value: 0, disabled: false}],
-      mediasrv: [false],
-      cass: [false],
-      cassip: [""]
     });
     this.fieldsSOArray.push(serverGroup)
   }
@@ -554,9 +547,6 @@ export class HomeComponent implements OnInit {
       var dc = this.fieldsSOArray.at(i).get('dc')?.value
       var rack = this.fieldsSOArray.at(i).get('rack')?.value
       var p = this.fieldsSOArray.at(i).get('platform')?.value
-      var l = this.fieldsSOArray.at(i).get('limno')?.value
-      var m = this.fieldsSOArray.at(i).get('mediasrv')?.value
-      var c = this.fieldsSOArray.at(i).get('cassip')?.value
 
       var host = ""
       host += "Host name:         " + h + this.un
@@ -566,19 +556,6 @@ export class HomeComponent implements OnInit {
       host += "Rack name:         " + rack + this.un
       host += "Platform:          " + p + this.un
       
-      if (l == 0) {
-        host += "LIM number:        " + this.un  
-      } else {
-        host += "LIM number:        " + l + this.un
-      }
-      
-      if (m) {
-        host += "Media Server:      yes" + this.un
-      } else {
-        host += "Media Server:      " + this.un
-      }
-      
-      host += "Cassandra IP:      " + c
       host += this.un + this.un
 
       this.outputSO += host
@@ -626,20 +603,8 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  enableSOLim(l :number) :boolean {
-    return false
-  }
-
   enableCass(l :number) :boolean {
     if (this.fieldsArray.at(l).get('cass')?.value) {
-      return false
-    } else {
-      return true
-    }
-  }
-
-  enableSOCass(l :number) :boolean {
-    if (this.fieldsSOArray.at(l).get('cass')?.value) {
       return false
     } else {
       return true
