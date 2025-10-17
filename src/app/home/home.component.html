@@ -1,0 +1,741 @@
+<h1 [align]="'center'">MXONE Deployment file generator</h1>
+
+<!--NEW MXONE SYSTEM-->
+
+<mat-tab-group dynamicHeight>
+    <mat-tab label="New MXONE 8.0 System">
+      
+      <mat-vertical-stepper [linear]="stepper_linear" #stepper [animationDuration]="stepper_duration">
+        <mat-step [stepControl]="baseSet">
+          <form [formGroup]="baseSet">
+
+            <ng-template matStepLabel>General settings</ng-template>
+            <br>
+                
+            <mat-form-field class="server-field">
+              <mat-label>System name</mat-label>
+              <input matInput formControlName="system_name" />
+            </mat-form-field>
+            &nbsp;
+            <mat-form-field class="server-field">
+              <mat-label>Version</mat-label>
+              <input matInput readonly="true" formControlName="version" />
+            </mat-form-field>
+            &nbsp;
+            <mat-form-field class="server-field">
+              <mat-label>MXONE Domain</mat-label>
+              <input matInput formControlName="mxone_domain" placeholder="mxone.example.com" matTooltip="Max 255 charaters for host & domain. 63 characters per subdomain. a-zA-Z0-9 - ." />
+              @if (baseSet.get('mxone_domain')?.hasError('pattern')) {
+                <mat-error>Incompatible characters, e.g. space</mat-error>
+              }
+            </mat-form-field>
+            <br>
+
+            <mat-form-field class="server-field">
+              <mat-label>NTP</mat-label>
+              <input matInput formControlName="ntp"/>
+            </mat-form-field>
+            <br>
+
+            <mat-form-field class="server-field">
+              <mat-label>Media DiffServ</mat-label>
+              <mat-select formControlName="qos_media">
+                <mat-option>--</mat-option>
+                @for (q of qos; track q.id) {
+                  <mat-option [value]="q.id">{{q.id}} - {{q.label}}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            &nbsp;
+            <mat-form-field class="server-field">
+              <mat-label>Signalling DiffServ</mat-label>
+              <mat-select formControlName="qos_sig">
+                <mat-option>--</mat-option>
+                @for (q of qos; track q.id) {
+                  <mat-option [value]="q.id">{{q.id}} - {{q.label}}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <br>
+
+            <mat-form-field class="server-field">
+              <mat-label>Market data</mat-label>
+              <mat-select formControlName="mrkt_data">
+                <mat-option>--</mat-option>
+                @for (m of market; track m) {
+                  <mat-option [value]="m">{{m}}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <br>
+
+            <mat-form-field class="server-field">
+              <mat-label>License type</mat-label>
+              <mat-select formControlName="lic_type">
+                <mat-option>--</mat-option>
+                @for (lic of licenses; track lic) {
+                  <mat-option [value]="lic">{{lic}}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <br>
+
+            <mat-form-field class="server-field">
+              <mat-label>DNS Forwarder 1</mat-label>
+              <input matInput formControlName="dns_srv1"/>
+            </mat-form-field>
+            &nbsp;
+            <mat-form-field class="server-field">
+              <mat-label>DNS Forwarder 2</mat-label>
+              <input matInput formControlName="dns_srv2"/>
+            </mat-form-field>
+            &nbsp;
+            <mat-form-field class="server-field">
+              <mat-label>DNS Forwarder 3</mat-label>
+              <input matInput formControlName="dns_srv3"/>
+            </mat-form-field>
+            <br>
+
+            <mat-form-field class="server-field">
+              <mat-label>DNS Search 1</mat-label>
+              <input matInput formControlName="dsn_srch1"/>
+            </mat-form-field>
+            &nbsp;
+            <mat-form-field class="server-field">
+              <mat-label>DNS Search 2</mat-label>
+              <input matInput formControlName="dsn_srch2"/>
+            </mat-form-field>
+            &nbsp;
+            <mat-form-field class="server-field">
+              <mat-label>DNS Search 3</mat-label>
+              <input matInput formControlName="dsn_srch3"/>
+            </mat-form-field>
+            &nbsp;
+            <mat-form-field class="server-field">
+              <mat-label>DNS Search 4</mat-label>
+              <input matInput formControlName="dsn_srch4"/>
+            </mat-form-field>
+            &nbsp;
+            <mat-form-field class="server-field">
+              <mat-label>DNS Search 5</mat-label>
+              <input matInput formControlName="dsn_srch5"/>
+            </mat-form-field>
+            <br>
+
+            <div>
+              <button mat-button matStepperNext type="button">Next</button>
+            </div>
+          </form>
+        
+        </mat-step>
+
+        <mat-step [stepControl]="datacenterSet">
+          <form [formGroup]="datacenterSet">
+
+          <ng-template matStepLabel>Datacenters</ng-template>
+          <br>
+          <div>
+            @for (d of datacenterArray; track d.id; let di = $index) {
+              <div formArrayName="dc_racks">
+                <div [formGroupName]="$index">
+
+                  <mat-form-field class="server-field">
+                    <mat-label>Datacenter</mat-label>
+                    <input matInput matTooltip="First: a-zA-Z0-9. Then: a-zA-Z0-9_- (Length: 2-48). Case sensitive." formControlName="datacenter"/>
+                    @if (dcrArray.at(di).get('datacenter')?.hasError('pattern')) {
+                      <mat-error>Incompatible characters, e.g. space</mat-error>
+                    }
+                    @if (dcrArray.at(di).get('datacenter')?.hasError('maxlength')) {
+                      <mat-error>Max 48 characters</mat-error>
+                    }
+                    @if (dcrArray.at(di).get('datacenter')?.hasError('minlength')) {
+                      <mat-error>At least 2 characters required</mat-error>
+                    }
+                  </mat-form-field>
+                  &nbsp;
+                  <mat-form-field class="server-field">
+                    <mat-label>Rack (1)</mat-label>
+                    <input matInput matTooltip="First: a-zA-Z0-9. Then: a-zA-Z0-9_- (Length: 2-48). Case sensitive." formControlName="rack1"/>
+                    @if (dcrArray.at(di).get('rack1')?.hasError('pattern')) {
+                      <mat-error>Incompatible characters, e.g. space</mat-error>
+                    }
+                    @if (dcrArray.at(di).get('rack1')?.hasError('maxlength')) {
+                      <mat-error>Max 48 characters</mat-error>
+                    }
+                    @if (dcrArray.at(di).get('rack1')?.hasError('minlength')) {
+                      <mat-error>At least 2 characters required</mat-error>
+                    }
+                  </mat-form-field>
+                  &nbsp;
+                  <mat-form-field class="server-field">
+                    <mat-label>Rack (2)</mat-label>
+                    <input matInput matTooltip="First: a-zA-Z0-9. Then: a-zA-Z0-9_- (Length: 2-48). Case sensitive." formControlName="rack2"/>
+                    @if (dcrArray.at(di).get('rack2')?.hasError('pattern')) {
+                      <mat-error>Incompatible characters, e.g. space</mat-error>
+                    }
+                    @if (dcrArray.at(di).get('rack2')?.hasError('maxlength')) {
+                      <mat-error>Max 48 characters</mat-error>
+                    }
+                    @if (dcrArray.at(di).get('rack2')?.hasError('minlength')) {
+                      <mat-error>At least 2 characters required</mat-error>
+                    }
+                  </mat-form-field>
+
+                  &nbsp;
+                    <button mat-mini-fab (click)="addDC()"><mat-icon matTooltip="Add datacenter & racks">add</mat-icon></button>
+                  
+                  @if (di !== 0) {
+                    &nbsp;
+                    <button mat-mini-fab (click)="rmDC(di)"><mat-icon matTooltip="Remove datacenter">delete</mat-icon></button>
+                    &nbsp;
+                    <button mat-mini-fab (click)="updateDC(di)"><mat-icon matTooltip="Update values if added in other tab">autorenew</mat-icon></button>
+                    
+                  }
+
+                  <br><br>
+
+                </div>
+              </div>
+            }
+            <br><br>
+            <button mat-button matStepperPrevious type="button">Back</button>
+            <button mat-button matStepperNext type="button">Next</button>
+          </div>
+        </form>
+        </mat-step>
+
+        <mat-step [stepControl]="networkSet">
+          <form [formGroup]="networkSet">
+
+          <ng-template matStepLabel>Networks</ng-template>
+          <br>
+          <div>
+            @for (n of networkArray; track n.id; let ni = $index) {
+              <div formArrayName="networks">
+                <div [formGroupName]="$index">
+
+                  <mat-form-field class="server-field">
+                    <mat-label>Network</mat-label>
+                    <input matInput formControlName="network"/>
+                  </mat-form-field>
+                  &nbsp;
+                  <mat-form-field class="server-field">
+                    <mat-label>Subnet</mat-label>
+                    <input matInput formControlName="subnet"/>
+                    <mat-hint align="start">Dotted-decimal or CIDR</mat-hint>
+                  </mat-form-field>
+                  &nbsp;
+                  <mat-form-field class="server-field">
+                    <mat-label>Gateway</mat-label>
+                    <input matInput formControlName="gateway"/>
+                  </mat-form-field>
+                  &nbsp;
+                  <mat-form-field class="server-field">
+                    <mat-label>Type</mat-label>
+                    <mat-select formControlName="type">
+                      <mat-option>--</mat-option>
+                        <mat-option [value]="'ipv4'">ipv4</mat-option>
+                        <mat-option [value]="'ipv6'">ipv6</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  &nbsp;
+                    <button mat-mini-fab (click)="addNet()"><mat-icon matTooltip="Add network">add</mat-icon></button>
+
+                  @if (ni !== 0) {
+                    &nbsp;
+                    <button mat-mini-fab (click)="rmNet(ni)"><mat-icon matTooltip="Remove network">delete</mat-icon></button>
+                    &nbsp;
+                    <button mat-mini-fab (click)="updateNet(ni)"><mat-icon matTooltip="Update values if added in other tab">autorenew</mat-icon></button>
+                  }
+
+                  <br>
+
+                </div>
+              </div>
+            }
+            <br><br>
+            <button mat-button matStepperPrevious type="button">Back</button>
+            <button mat-button matStepperNext type="button">Next</button>
+          </div>
+        </form>
+        </mat-step>
+
+        @for (server of serverArray; track server.label; let j = $index) {
+          <!--Important to handle stepControl in this manner. StepControl determines whether form 's required fields are completed. 
+            However, if reference to parent form (serverSet), then can't step to next server form because of an chicken-and-egg situation.-->  
+          <mat-step [stepControl]="fieldsArray.at(j)"> 
+              <form [formGroup]="serverSet">
+            <ng-template matStepLabel>Server {{server.label}}</ng-template>
+
+            <div formArrayName="fields">
+              <div [formGroupName]="j">
+
+                <br>
+                <h3>Base server</h3>
+                <mat-form-field class="server-field">
+                  <mat-label>Host name</mat-label>
+                  <input matInput matTooltip="Use 'a-z A-Z 0-9 -' (Length 1-63)" formControlName="host_name"/>
+                  @if (fieldsArray.at(j).get('host_name')?.hasError('pattern')) {
+                    <mat-error>Incompatible characters, e.g. space</mat-error>
+                  }
+                  @if (fieldsArray.at(j).get('host_name')?.hasError('maxlength')) {
+                    <mat-error>Max 63 characters</mat-error>
+                  }
+                </mat-form-field>
+                &nbsp;
+                <mat-form-field class="server-field">
+                  <mat-label>IPv4</mat-label>
+                  <input matInput formControlName="ipv4"/>
+                </mat-form-field>
+                &nbsp;
+                <mat-form-field class="server-field">
+                  <mat-label>Host Network (IPv4)</mat-label>
+                  <mat-select matTooltip="Future will be used to verify IPv4 address matches network and gateway" (selectionChange)="netSelection($event, j)" required>
+                    <mat-option>--</mat-option>
+                    @for (n of netArray(j, "ipv4"); track n) {
+                      <mat-option [value]="n">{{n}}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                &nbsp;
+                <mat-form-field class="server-field">
+                  <mat-label>IPv6</mat-label>
+                  <input matInput formControlName="ipv6"/>
+                </mat-form-field>
+                <br>
+
+                <mat-form-field class="server-field">
+                  <mat-label>Datacenter</mat-label>
+                  <mat-select (selectionChange)="dcSelection($event, j)">
+                    <mat-option>--</mat-option>
+                    @for (d of datacenterArray; track d) {
+                      <mat-option [value]="$index">{{this.dcrArray.at($index).get('datacenter')?.value}}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                &nbsp;
+
+                &nbsp;
+                <mat-form-field class="server-field">
+                  <mat-label>Rack</mat-label>
+                  <mat-select (selectionChange)="rackSelection($event, j)" formControlName="rack">
+                    <mat-option>--</mat-option>
+                    @for (r of rackArray(j); track r) {
+                      <mat-option [value]="r">{{r}}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <br>
+
+                <mat-form-field class="server-field">
+                  <mat-label>Platform</mat-label>
+                  <mat-select formControlName="platform">
+                    <mat-option>--</mat-option>
+                    @for (p of platform; track p) {
+                      <mat-option [value]="p.id">{{p.id}}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <br>
+
+                <mat-divider></mat-divider>
+
+                <br>
+                <h3>Services</h3>
+                <mat-checkbox formControlName="lim">Service Node (LIM)?</mat-checkbox>
+                &nbsp;
+                <mat-form-field class="server-field">
+                  <mat-label>LIM no.</mat-label>
+                  <input matInput [readonly]="enableLim(j)" type="number" formControlName="limno"/>
+                </mat-form-field>
+                <br>
+                <mat-checkbox formControlName="mediasrv">Media Server?</mat-checkbox>
+                <br>
+                <mat-checkbox matTooltip="Tick to enable Cassandra and enter IP address" formControlName="cass">Cassandra node?</mat-checkbox>
+                &nbsp;
+                <mat-form-field class="server-field">
+                  <mat-label>Cassandra IP</mat-label>
+                  <input matInput [readonly]="enableCass(j)" [required]="!enableCass(j)" type="string" matTooltip="If IPv6 is used, this address must be IPv6" formControlName="cassip"/>
+                </mat-form-field>
+  
+              </div>
+            </div>
+
+            <mat-divider></mat-divider>
+
+            <br>
+            <h3>Add/Remove servers</h3>
+            <div>
+              <button mat-mini-fab (click)="addServer()"><mat-icon matTooltip="Add another server">add</mat-icon></button>
+              &nbsp;
+              
+              @if (j !== 0) {
+                <button mat-mini-fab (click)="rmServer(j)"><mat-icon matTooltip="Remove this server">delete</mat-icon></button>
+              }
+              <br><br>
+            </div>
+
+            <mat-divider></mat-divider>
+            
+            <br>
+            <div>
+              <br>
+              <button mat-button matStepperPrevious type="button">Back</button>
+              <button mat-button matStepperNext type="button">Next</button>
+            </div>
+            </form>
+        </mat-step>
+        }
+        
+
+        <mat-step [stepControl]="serverSet">
+          <ng-template matStepLabel>Finish</ng-template>
+          <div>
+            @if(checkDirty()) {
+              <mat-error> <strong>Data has changed. Click update.</strong></mat-error>
+            }
+            <br>
+            <mat-form-field class="output-box">
+              <textarea matInput cdkTextareaAutosize cdkAutosizeMinRows="10" cdkAutosizeMaxRows="50" [disabled]="checkDirty()" placeholder="Make changes in the previous fields, then click update here..." [value]="output">{{output}}</textarea>
+            </mat-form-field>
+            <br>
+          </div>
+          
+          <button mat-button matStepperPrevious>Back</button>
+          <button mat-stroked-button type="submit" (click)="commitConfig()" [disabled]="!checkDirty()">Update</button>
+        @if (download_ready) {
+          &nbsp;
+          <button mat-stroked-button (click)="download()" [disabled]="checkDirty()">Download</button>
+        }
+        <br>
+        <button mat-button (click)="stepper.reset()">Clear all</button>
+      </mat-step>
+
+      </mat-vertical-stepper>
+    </mat-tab>
+
+<!----------------->
+<!--MXONE SERVERS-->
+<!----------------->
+
+    <mat-tab label="Add MXONE 8.0 Server">
+      <mat-vertical-stepper [linear]="stepper_linear" #stepperOnly [animationDuration]="stepper_duration">
+        <mat-step [stepControl]="baseSetServerOnly">
+          <form [formGroup]="baseSetServerOnly">
+
+            <ng-template matStepLabel>General settings</ng-template>
+            <br>
+                
+            <mat-form-field class="server-field">
+              <mat-label>System name</mat-label>
+              <input matInput formControlName="system_name" />
+            </mat-form-field>
+            &nbsp;
+            <mat-form-field class="server-field">
+              <mat-label>Version</mat-label>
+              <input matInput readonly="true" formControlName="version" />
+            </mat-form-field>
+
+            <div>
+              <button mat-button matStepperNext type="button">Next</button>
+            </div>
+          </form>
+        
+        </mat-step>
+
+        <mat-step [stepControl]="datacenterSet">
+          <form [formGroup]="datacenterSet">
+
+          <ng-template matStepLabel>Datacenters</ng-template>
+          <ng-template matStepContent>
+          <br>
+          <div>
+            @for (d of datacenterArray; track d.id; let di = $index) {
+              <div formArrayName="dc_racks">
+                <div [formGroupName]="$index">
+
+                  <mat-form-field class="server-field">
+                    <mat-label>Datacenter</mat-label>
+                    <input matInput matTooltip="First: a-zA-Z0-9. Then: a-zA-Z0-9_- (Length: 2-48). Case sensitive." formControlName="datacenter"/>
+                    @if (dcrArray.at(di).get('datacenter')?.hasError('pattern')) {
+                      <mat-error>Incompatible characters, e.g. space</mat-error>
+                    }
+                    @if (dcrArray.at(di).get('datacenter')?.hasError('maxlength')) {
+                      <mat-error>Max 48 characters</mat-error>
+                    }
+                    @if (dcrArray.at(di).get('datacenter')?.hasError('minlength')) {
+                      <mat-error>At least 2 characters required</mat-error>
+                    }
+                  </mat-form-field>
+                  &nbsp;
+                  <mat-form-field class="server-field">
+                    <mat-label>Rack (1)</mat-label>
+                    <input matInput matTooltip="First: a-zA-Z0-9. Then: a-zA-Z0-9_- (Length: 2-48). Case sensitive." formControlName="rack1"/>
+                    @if (dcrArray.at(di).get('rack1')?.hasError('pattern')) {
+                      <mat-error>Incompatible characters, e.g. space</mat-error>
+                    }
+                    @if (dcrArray.at(di).get('rack1')?.hasError('maxlength')) {
+                      <mat-error>Max 48 characters</mat-error>
+                    }
+                    @if (dcrArray.at(di).get('rack1')?.hasError('minlength')) {
+                      <mat-error>At least 2 characters required</mat-error>
+                    }
+                  </mat-form-field>
+                  &nbsp;
+                  <mat-form-field class="server-field">
+                    <mat-label>Rack (2)</mat-label>
+                    <input matInput matTooltip="First: a-zA-Z0-9. Then: a-zA-Z0-9_- (Length: 2-48). Case sensitive." formControlName="rack2"/>
+                    @if (dcrArray.at(di).get('rack2')?.hasError('pattern')) {
+                      <mat-error>Incompatible characters, e.g. space</mat-error>
+                    }
+                    @if (dcrArray.at(di).get('rack2')?.hasError('maxlength')) {
+                      <mat-error>Max 48 characters</mat-error>
+                    }
+                    @if (dcrArray.at(di).get('rack2')?.hasError('minlength')) {
+                      <mat-error>At least 2 characters required</mat-error>
+                    }
+                  </mat-form-field>
+
+                  &nbsp;
+                    <button mat-mini-fab (click)="addDC()"><mat-icon matTooltip="Add datacenter & racks">add</mat-icon></button>
+                  
+                  @if (di !== 0) {
+                    &nbsp;
+                    <button mat-mini-fab (click)="rmDC(di)"><mat-icon matTooltip="Remove datacenter">delete</mat-icon></button>
+                    &nbsp;
+                    <button mat-mini-fab (click)="updateDC(di)"><mat-icon matTooltip="Update values if added in other tab">autorenew</mat-icon></button>
+                  }
+
+                  <br><br>
+
+                </div>
+              </div>
+            }
+            <br><br>
+            <button mat-button matStepperPrevious type="button">Back</button>
+            <button mat-button matStepperNext type="button">Next</button>
+          </div>
+        </ng-template>
+        </form>
+        </mat-step>
+
+        <mat-step [stepControl]="networkSet">
+          <form [formGroup]="networkSet">
+
+          <ng-template matStepLabel>Networks</ng-template>
+          <ng-template matStepContent>
+          <br>
+          <div>
+            @for (n of networkArray; track n.id; let ni = $index) {
+              <div formArrayName="networks">
+                <div [formGroupName]="$index">
+
+                  <mat-form-field class="server-field">
+                    <mat-label>Network</mat-label>
+                    <input matInput formControlName="network"/>
+                  </mat-form-field>
+                  &nbsp;
+                  <mat-form-field class="server-field">
+                    <mat-label>Subnet</mat-label>
+                    <input matInput formControlName="subnet"/>
+                    <mat-hint align="start">Dotted-decimal or CIDR</mat-hint>
+                  </mat-form-field>
+                  &nbsp;
+                  <mat-form-field class="server-field">
+                    <mat-label>Gateway</mat-label>
+                    <input matInput formControlName="gateway"/>
+                  </mat-form-field>
+                  &nbsp;
+                  <mat-form-field class="server-field">
+                    <mat-label>Type</mat-label>
+                    <mat-select formControlName="type">
+                      <mat-option>--</mat-option>
+                        <mat-option [value]="'ipv4'">ipv4</mat-option>
+                        <mat-option [value]="'ipv6'">ipv6</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  &nbsp;
+                    <button mat-mini-fab (click)="addNet()"><mat-icon matTooltip="Add network">add</mat-icon></button>
+
+                  @if (ni !== 0) {
+                    &nbsp;
+                    <button mat-mini-fab (click)="rmNet(ni)"><mat-icon matTooltip="Remove network">delete</mat-icon></button>
+                    &nbsp;
+                    <button mat-mini-fab (click)="updateNet(ni)"><mat-icon matTooltip="Update values if added in other tab">autorenew</mat-icon></button>
+                  }
+
+                  <br>
+
+                </div>
+              </div>
+            }
+            <br><br>
+            <button mat-button matStepperPrevious type="button">Back</button>
+            <button mat-button matStepperNext type="button">Next</button>
+          </div>
+        </ng-template>
+        </form>
+        </mat-step>
+
+        @for (server of serverOnlyArray; track server.label; let j = $index) {
+          <!--Important to handle stepControl in this manner. StepControl determines whether form 's required fields are completed. 
+            However, if reference to parent form (serverSet), then can't step to next server form because of an chicken-and-egg situation.-->  
+          <mat-step [stepControl]="fieldsSOArray.at(j)"> 
+              <form [formGroup]="serverSetServerOnly">
+            <ng-template matStepLabel>Server {{server.label}}</ng-template>
+            
+            <div formArrayName="fields">
+              <div [formGroupName]="j">
+
+                <br>
+                <h3>Base server</h3>
+                <mat-form-field class="server-field">
+                  <mat-label>Host name</mat-label>
+                  <input matInput matTooltip="Use 'a-z A-Z 0-9 -' (Length 1-63)" formControlName="host_name"/>
+                  @if (fieldsSOArray.at(j).get('host_name')?.hasError('pattern')) {
+                    <mat-error>Incompatible characters, e.g. space</mat-error>
+                  }
+                  @if (fieldsSOArray.at(j).get('host_name')?.hasError('maxlength')) {
+                    <mat-error>Max 63 characters</mat-error>
+                  }
+                </mat-form-field>
+                &nbsp;
+                <mat-form-field class="server-field">
+                  <mat-label>IPv4</mat-label>
+                  <input matInput formControlName="ipv4"/>
+                </mat-form-field>
+                &nbsp;
+                <mat-form-field class="server-field">
+                  <mat-label>Host Network (IPv4)</mat-label>
+                  <mat-select matTooltip="Future will be used to verify IPv4 address matches network and gateway" (selectionChange)="netSelection($event, j)" required>
+                    <mat-option>--</mat-option>
+                    @for (n of netArray(j, "ipv4"); track n) {
+                      <mat-option [value]="n">{{n}}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                &nbsp;
+                <mat-form-field class="server-field">
+                  <mat-label>IPv6</mat-label>
+                  <input matInput formControlName="ipv6"/>
+                </mat-form-field>
+                <br>
+
+                <mat-form-field class="server-field">
+                  <mat-label>Datacenter</mat-label>
+                  <mat-select (selectionChange)="dcSOSelection($event, j)">
+                    <mat-option>--</mat-option>
+                    @for (d of datacenterArray; track d) {
+                      <mat-option [value]="$index">{{this.dcrArray.at($index).get('datacenter')?.value}}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                &nbsp;
+
+                &nbsp;
+                <mat-form-field class="server-field">
+                  <mat-label>Rack</mat-label>
+                  <mat-select (selectionChange)="rackSOSelection($event, j)" formControlName="rack">
+                    <mat-option>--</mat-option>
+                    @for (r of rackSOArray(j); track r) {
+                      <mat-option [value]="r">{{r}}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <br>
+
+                <mat-form-field class="server-field">
+                  <mat-label>Platform</mat-label>
+                  <mat-select formControlName="platform">
+                    <mat-option>--</mat-option>
+                    @for (p of platform; track p) {
+                      <mat-option [value]="p.id">{{p.id}}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <br>
+
+                <mat-divider></mat-divider>
+
+                <br>
+                <h3>Services</h3>
+                <mat-checkbox formControlName="lim">Service Node (LIM)?</mat-checkbox>
+                &nbsp;
+                <mat-form-field class="server-field">
+                  <mat-label>LIM no.</mat-label>
+                  <input matInput [readonly]="enableSOLim(j)" type="number" formControlName="limno"/>
+                </mat-form-field>
+                <br>
+                <mat-checkbox formControlName="mediasrv">Media Server?</mat-checkbox>
+                <br>
+                <mat-checkbox matTooltip="Tick to enable Cassandra and enter IP address" formControlName="cass">Cassandra node?</mat-checkbox>
+                &nbsp;
+                <mat-form-field class="server-field">
+                  <mat-label>Cassandra IP</mat-label>
+                  <input matInput [readonly]="enableSOCass(j)" [required]="!enableSOCass(j)" type="string" matTooltip="If IPv6 is used, this address must be IPv6" formControlName="cassip"/>
+                </mat-form-field>
+  
+              </div>
+            </div>
+
+            <mat-divider></mat-divider>
+
+            <br>
+            <h3>Add/Remove server</h3>
+            <div>
+              <button mat-mini-fab (click)="addServerOnly(true)"><mat-icon matTooltip="Add another server">add</mat-icon></button>
+              &nbsp;
+
+              @if (j !== 0) {
+                <button mat-mini-fab (click)="rmServerOnly(j)"><mat-icon matTooltip="Remove this server">delete</mat-icon></button>
+              }
+              <br><br>
+            </div>
+
+            <mat-divider></mat-divider>
+            
+            <div>
+              <br>
+              <button mat-button matStepperPrevious type="button">Back</button>
+              <button mat-button matStepperNext type="button">Next</button>
+            </div>
+            </form>
+        </mat-step>
+        }
+        
+
+        <mat-step [stepControl]="serverSetServerOnly">
+          <ng-template matStepLabel>Finish</ng-template>
+          <div>
+            @if(checkDirtySO()) {
+              <mat-error> <strong>Data has changed. Click update.</strong></mat-error>
+            }
+            <br>
+            <mat-form-field class="output-box">
+              <textarea matInput cdkTextareaAutosize cdkAutosizeMinRows="10" cdkAutosizeMaxRows="50" [disabled]="checkDirtySO()" placeholder="Make changes in the previous fields, then click update here..." [value]="outputSO">{{outputSO}}</textarea>
+            </mat-form-field>
+            <br>
+          </div>
+          
+          <button mat-button matStepperPrevious>Back</button>
+          <button mat-stroked-button type="submit" (click)="commitConfigSO()" [disabled]="!checkDirtySO()">Update</button>
+        @if (downloadSO_ready) {
+          &nbsp;
+          <button mat-stroked-button (click)="downloadSO()" [disabled]="checkDirtySO()">Download</button>
+        }
+        <br>
+        <button mat-button (click)="stepperOnly.reset()">Clear all</button>
+      </mat-step>
+
+      </mat-vertical-stepper>
+      </mat-tab>
+
+  </mat-tab-group>
+  
+  
+
+
+
+  

@@ -1,0 +1,391 @@
+<h1 [align]="'center'">MXONE Deployment file generator</h1>
+
+<mat-tab-group dynamicHeight>
+    <mat-tab label="New MXONE 8.0 System">
+      <form [formGroup]="dataSet">
+      
+      <mat-vertical-stepper [linear]="stepper_linear" #stepper [animationDuration]="stepper_duration">
+        <mat-step [stepControl]="dataSet">
+
+            <ng-template matStepLabel>General settings</ng-template>
+            <br>
+                
+            <mat-form-field class="server-field">
+              <mat-label>System name</mat-label>
+              <input matInput formControlName="system_name" />
+            </mat-form-field>
+            &nbsp;
+            <mat-form-field class="server-field">
+              <mat-label>Version</mat-label>
+              <input matInput formControlName="version" />
+            </mat-form-field>
+            &nbsp;
+            <mat-form-field class="server-field">
+              <mat-label>MXONE Domain</mat-label>
+              <input matInput formControlName="mxone_domain" placeholder="mxone.example.com" required />
+            </mat-form-field>
+            <br>
+
+            <mat-form-field class="server-field">
+              <mat-label>NTP</mat-label>
+              <input matInput formControlName="ntp" required/>
+            </mat-form-field>
+            <br>
+
+            <mat-form-field class="server-field">
+              <mat-label>Media DiffServ</mat-label>
+              <mat-select formControlName="qos_media" required>
+                <mat-option>--</mat-option>
+                @for (q of qos; track q.id) {
+                  <mat-option [value]="q.id">{{q.id}} - {{q.label}}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            &nbsp;
+            <mat-form-field class="server-field">
+              <mat-label>Signalling DiffServ</mat-label>
+              <mat-select formControlName="qos_sig" required>
+                <mat-option>--</mat-option>
+                @for (q of qos; track q.id) {
+                  <mat-option [value]="q.id">{{q.id}} - {{q.label}}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <br>
+
+            <mat-form-field class="server-field">
+              <mat-label>Market data</mat-label>
+              <mat-select formControlName="mrkt_data" required>
+                <mat-option>--</mat-option>
+                @for (m of market; track m) {
+                  <mat-option [value]="m">{{m}}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <br>
+
+            <mat-form-field class="server-field">
+              <mat-label>License type</mat-label>
+              <mat-select formControlName="lic_type" required>
+                <mat-option>--</mat-option>
+                @for (lic of licenses; track lic) {
+                  <mat-option [value]="lic">{{lic}}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <br>
+
+            <mat-form-field class="server-field">
+              <mat-label>DNS Forwarder 1</mat-label>
+              <input matInput formControlName="dns_srv1" required/>
+            </mat-form-field>
+            &nbsp;
+            <mat-form-field class="server-field">
+              <mat-label>DNS Forwarder 2</mat-label>
+              <input matInput formControlName="dns_srv2"/>
+            </mat-form-field>
+            &nbsp;
+            <mat-form-field class="server-field">
+              <mat-label>DNS Forwarder 3</mat-label>
+              <input matInput formControlName="dns_srv3"/>
+            </mat-form-field>
+            <br>
+
+            <mat-form-field class="server-field">
+              <mat-label>DNS Search 1</mat-label>
+              <input matInput formControlName="dsn_srch1"/>
+            </mat-form-field>
+            &nbsp;
+            <mat-form-field class="server-field">
+              <mat-label>DNS Search 2</mat-label>
+              <input matInput formControlName="dsn_srch2"/>
+            </mat-form-field>
+            &nbsp;
+            <mat-form-field class="server-field">
+              <mat-label>DNS Search 3</mat-label>
+              <input matInput formControlName="dsn_srch3"/>
+            </mat-form-field>
+            &nbsp;
+            <mat-form-field class="server-field">
+              <mat-label>DNS Search 4</mat-label>
+              <input matInput formControlName="dsn_srch4"/>
+            </mat-form-field>
+            &nbsp;
+            <mat-form-field class="server-field">
+              <mat-label>DNS Search 5</mat-label>
+              <input matInput formControlName="dsn_srch5"/>
+            </mat-form-field>
+            <br>
+
+            <div>
+              <button mat-button matStepperNext type="button">Next</button>
+            </div>
+        
+        </mat-step>
+
+        <mat-step [stepControl]="dataSet">
+
+          <ng-template matStepLabel>Datacenters</ng-template>
+          <br>
+          <div>
+            @for (d of datacenterArray; track d.id; let di = $index) {
+              <div formArrayName="dc_racks">
+                <div [formGroupName]="$index">
+
+                  <mat-form-field class="server-field">
+                    <mat-label>Datacenter</mat-label>
+                    <input matInput formControlName="datacenter"/>
+                  </mat-form-field>
+                  &nbsp;
+                  <mat-form-field class="server-field">
+                    <mat-label>Rack (1)</mat-label>
+                    <input matInput formControlName="rack1"/>
+                  </mat-form-field>
+                  &nbsp;
+                  <mat-form-field class="server-field">
+                    <mat-label>Rack (2)</mat-label>
+                    <input matInput formControlName="rack2"/>
+                  </mat-form-field>
+                  
+                  @if (di !== 0) {
+                    &nbsp;
+                    <button mat-mini-fab (click)="rmDC(di)"><mat-icon matTooltip="Remove datacenter">delete</mat-icon></button>
+                  }
+
+                  <br>
+
+                </div>
+              </div>
+            }
+            <button mat-stroked-button (click)="addDC()">Add Datacenters & Racks</button>
+            <button mat-button matStepperPrevious type="button">Back</button>
+            <button mat-button matStepperNext type="button">Next</button>
+          </div>
+        </mat-step>
+
+        <mat-step [stepControl]="dataSet">
+
+          <ng-template matStepLabel>Networks</ng-template>
+          <br>
+          <div>
+            @for (n of networkArray; track n.id; let ni = $index) {
+              <div formArrayName="networks">
+                <div [formGroupName]="$index">
+
+                  <mat-form-field class="server-field">
+                    <mat-label>Network</mat-label>
+                    <input matInput formControlName="network"/>
+                  </mat-form-field>
+                  &nbsp;
+                  <mat-form-field class="server-field">
+                    <mat-label>Subnet</mat-label>
+                    <input matInput formControlName="subnet"/>
+                    <mat-hint align="start">Dotted-decimal or CIDR</mat-hint>
+                  </mat-form-field>
+                  &nbsp;
+                  <mat-form-field class="server-field">
+                    <mat-label>Gateway</mat-label>
+                    <input matInput formControlName="gateway"/>
+                  </mat-form-field>
+                  &nbsp;
+                  <mat-form-field class="server-field">
+                    <mat-label>Type</mat-label>
+                    <mat-select formControlName="type">
+                      <mat-option>--</mat-option>
+                        <mat-option [value]="'ipv4'">ipv4</mat-option>
+                        <mat-option [value]="'ipv6'">ipv6</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  @if (ni !== 0) {
+                    &nbsp;
+                    <button mat-mini-fab (click)="rmNet(ni)"><mat-icon matTooltip="Remove network">delete</mat-icon></button>
+                  }
+
+                  <br>
+
+                </div>
+              </div>
+            }
+            <button mat-stroked-button (click)="addNet()">Add Network</button>
+            <button mat-button matStepperPrevious type="button">Back</button>
+            <button mat-button matStepperNext type="button">Next</button>
+          </div>
+        </mat-step>
+
+        @for (server of serverArray; track server.label; let j = $index) {
+            <mat-step [stepControl]="dataSet">
+            <ng-template matStepLabel>Server {{server.label}}</ng-template>
+
+            @if (j !== 0) {
+              <div>
+              <button mat-mini-fab (click)="rmServer(j)"><mat-icon matTooltip="Remove server">delete</mat-icon></button>
+              <br>
+              </div>
+            }
+
+            <br>
+
+            <div formArrayName="fields">
+              <div [formGroupName]="j">
+
+                <mat-form-field class="server-field">
+                  <mat-label>Host name</mat-label>
+                  <input matInput formControlName="host_name"/>
+                </mat-form-field>
+                &nbsp;
+                <mat-form-field class="server-field">
+                  <mat-label>IPv4</mat-label>
+                  <input matInput formControlName="ipv4" required/>
+                </mat-form-field>
+                &nbsp;
+                <mat-form-field class="server-field">
+                  <mat-label>Network (IPv4)</mat-label>
+                  <mat-select (selectionChange)="netSelection($event, j)">
+                    <mat-option>--</mat-option>
+                    @for (n of netArray(j, "ipv4"); track n) {
+                      <mat-option [value]="n">{{n}}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                &nbsp;
+                <mat-form-field class="server-field">
+                  <mat-label>IPv6</mat-label>
+                  <input matInput formControlName="ipv6"/>
+                </mat-form-field>
+                <br>
+
+                <mat-form-field class="server-field">
+                  <mat-label>Datacenter</mat-label>
+                  <mat-select (selectionChange)="dcSelection($event, j)">
+                    <mat-option>--</mat-option>
+                    @for (d of datacenterArray; track d) {
+                      <mat-option [value]="$index">{{this.dcrArray.at($index).get('datacenter')?.value}}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                &nbsp;
+
+                &nbsp;
+                <mat-form-field class="server-field">
+                  <mat-label>Rack</mat-label>
+                  <mat-select (selectionChange)="rackSelection($event, j)">
+                    <mat-option>--</mat-option>
+                    @for (r of rackArray(j); track r) {
+                      <mat-option [value]="r">{{r}}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <br>
+
+                <mat-form-field class="server-field">
+                  <mat-label>Platform</mat-label>
+                  <mat-select formControlName="platform">
+                    <mat-option>--</mat-option>
+                    @for (p of platform; track p) {
+                      <mat-option [value]="p.id">{{p.id}}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <br>
+
+                
+                <mat-checkbox formControlName="lim">Service Node (LIM)?</mat-checkbox>
+                &nbsp;
+                <mat-form-field class="server-field">
+                  <mat-label>LIM no.</mat-label>
+                  <input matInput [readonly]="enableLim(j)" type="number" formControlName="limno"/>
+                </mat-form-field>
+                <br>
+                <mat-checkbox formControlName="mediasrv">Media Server?</mat-checkbox>
+                <br>
+                <mat-checkbox formControlName="cass">Cassandra node?</mat-checkbox>
+                &nbsp;
+                <mat-form-field class="server-field">
+                  <mat-label>Cassandra IP</mat-label>
+                  <input matInput [readonly]="enableCass(j)" type="string" formControlName="cassip"/>
+                </mat-form-field>
+  
+              </div>
+            </div>
+            
+            <div>
+              <button mat-stroked-button (click)="addServer()">Add server</button>
+              <button mat-button matStepperPrevious type="button">Back</button>
+              <button mat-button matStepperNext type="button">Next</button>
+            </div>
+        </mat-step>
+        }
+        
+
+        <mat-step [stepControl]="dataSet">
+          <ng-template matStepLabel>Finish</ng-template>
+          <div>
+            <br>
+            <mat-form-field class="output-box">
+              <textarea matInput cdkTextareaAutosize cdkAutosizeMinRows="10" cdkAutosizeMaxRows="50" placeholder="Make changes in the previous fields, then click update here..." [value]="output">{{output}}</textarea>
+            </mat-form-field>
+            <br>
+          </div>
+          
+          <button mat-button matStepperPrevious>Back</button>
+          <button mat-stroked-button type="submit" (click)="commitConfig()" [disabled]="!dataSet.dirty">Update</button>
+        @if (download_ready) {
+          &nbsp;
+          <button mat-stroked-button (click)="download()" [disabled]="dataSet.dirty">Download</button>
+        }
+        <br>
+        <button mat-button (click)="stepper.reset()">Clear all</button>
+      </mat-step>
+
+      </mat-vertical-stepper>
+    </form>
+              <br><br>
+              <p>
+                 (2) Required fields | (1) Valid IP verifier | (3) Verify valid/clashing LIM no | (4) Test for IP clashes 
+              </p>
+    </mat-tab>
+
+    <mat-tab label="Add MXONE 8.0 Server">
+        <div class="example-small-box mat-elevation-z4">
+          <mat-grid-list cols="3" rowHeight="1:1">
+              
+              <mat-grid-tile [colspan]=2 [rowspan]=1 [style.background]="'lightblue'">
+                  Options
+                  - Server specific only
+              </mat-grid-tile>
+  
+              <mat-grid-tile [colspan]=1 [rowspan]=1 [style.background]="'lightgreen'">Code</mat-grid-tile>
+  
+          </mat-grid-list>        
+        </div>
+      </mat-tab>
+
+    <mat-tab label="MXONE 8.x Server Recovery">
+        <div class="example-large-box mat-elevation-z4">
+            Directions / command reminders
+            - MXONE
+            - PM
+            - SNM
+        </div>
+    </mat-tab>
+
+    <mat-tab label="Upgrade from MXONE 7.x">
+
+      <div class="example-large-box mat-elevation-z4">
+
+        Directions / command reminders
+         - MXONE
+         - PM
+         - SNM
+      </div>
+    </mat-tab>
+
+
+  </mat-tab-group>
+  
+  
+
+
+
+  
