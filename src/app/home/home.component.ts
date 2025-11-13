@@ -27,6 +27,9 @@ interface platformElement {
   comment: string;
 }
 
+let networkSubnetMap = new Map();
+let networkSubnetMapSO = new Map();
+
 @Component({
   selector: 'app-home',
   providers: [
@@ -85,6 +88,8 @@ export class HomeComponent implements OnInit {
   networkArray = [
     {id: "1"}
   ]
+  
+  
   
   def_qos_media = "0xB8"
   def_qos_sig = "0x98"
@@ -334,6 +339,7 @@ export class HomeComponent implements OnInit {
     this.serverArray.splice(l, l);
     this.serverArray = [...this.serverArray]
     this.fieldsArray.removeAt(l)
+    networkSubnetMap.delete(l);
     this.serverSet.markAsDirty();
   }
 
@@ -378,6 +384,7 @@ export class HomeComponent implements OnInit {
     this.serverOnlyArray.splice(l, l);
     this.serverOnlyArray = [...this.serverOnlyArray]
     this.fieldsSOArray.removeAt(l)
+    networkSubnetMapSO.delete(l);
     this.serverSetServerOnly.markAsDirty();
     this.harmonise_dirty();
   }
@@ -659,51 +666,268 @@ export class HomeComponent implements OnInit {
     var nets :string[] = []
     for (const n of this.netwArray.controls) {
       if (t == n.get('type')?.value) {
-        const v = n.get('network')?.value;
+        const v = n.get('network')?.value + "/" + n.get('subnet')?.value;
         nets.push(v)
       }
     }
     return nets
   }
 
-  netSelection(e :MatSelectChange, l :number) {
-    this.fieldsArray.at(l).patchValue({rack: e.value});
-    //console.log(this.dataSet.value)
+  subnetDoConversion(e: Event, i: number){
+    var v = (e.target as HTMLInputElement).value
+    var sm: number = 0;
+    if (!isNaN(Number(v))) {
+      if (+v > 32) {
+        console.error("CIDR cannot be larger than 32");
+        this.netwArray.controls.at(i)?.patchValue({subnet: 32});
+        sm = 32;
+      } else {
+        sm = +v;
+      }
+    } else {
+      var s = this.subnetConverter(v);
+      if (s !== null) {
+        this.netwArray.controls.at(i)?.patchValue({subnet: s});
+        sm = s;
+      } else {
+        this.netwArray.controls.at(i)?.patchValue({subnet: 32});
+        sm = 32;
+      }
+    }
+    
+    //Set host network correctly once subnet known
+    //TODO: vewrbose code - see host verify
+    //TODO: handle if host address is null (i.e. user skipped host and entered subnet mask)
+    var test :string[] = []
+    var host = this.netwArray.controls.at(i)?.get('network')?.value;
+    var hostIp :string[] = host.split(/\./)
+    var mask = this.cidrConverter(sm)
+    if (mask !== null && host !== null) {
+      for (let i = 0; i <= 3; i++) {
+        test[i] = (+hostIp[i] & mask[i]).toString();
+      }
+      
+      if (test.toString() !== host.toString()) {
+        var n = test[0] + '.' + test[1] + '.' + test[2] + '.' + test[3];
+        this.netwArray.controls.at(i)?.patchValue({network: n});
+      }
+
+    }
   }
 
+  makeFormDirty(f: FormControl, e: string){
+    f.setErrors({customError: true, message: e})
+    f.markAsTouched();
+  }
+
+  clearForm(f: FormControl){
+    f.setErrors(null);
+  }
+
+  blockgw4(e: Event, i: number) {
+    //console.log((e.target as HTMLInputElement).value);
+    //console.log(l);
+
+    var host = (e.target as HTMLInputElement).value
+    var netwk = this.netwArray.at(i).get('network')?.value
+    var sm = this.netwArray.at(i).get('subnet')?.value
+
+    const ip4ctrl = this.netwArray.at(i).get('gateway') as FormControl;
+
+    if (this.hostNetworkVerify(netwk, host, +sm)) {
+      this.clearForm(ip4ctrl);
+    } else {
+      this.makeFormDirty(ip4ctrl, "Gateway does not fit in selected host network");
+    }
+
+  }
+
+  blockip4(e: Event, l: number) {
+    //console.log((e.target as HTMLInputElement).value);
+    //console.log(l);
+
+    const ip4ctrl = this.fieldsArray.at(l).get('ipv4') as FormControl;
+    
+    //First time adding
+    if (!networkSubnetMap.has(l)) {
+      networkSubnetMap.set(l, "empty");
+      this.makeFormDirty(ip4ctrl, "IPv4 does not fit in selected host network");
+    //...already present, so an edit has taken place...
+    } else {
+      var val = networkSubnetMap.get(l)
+      switch (val) {
+        case "empty":
+          this.makeFormDirty(ip4ctrl, "IPv4 does not fit in selected host network");
+          break;
+        default:
+          var netwk = this.netwArray.at(val).get('network')?.value;
+          var sm = this.netwArray.at(val).get('subnet')?.value;
+          var host = this.fieldsArray.at(l).get('ipv4')?.value;
+          if (this.hostNetworkVerify(netwk, host, +sm)) {
+            this.clearForm(ip4ctrl);
+          } else {
+            this.makeFormDirty(ip4ctrl, "IPv4 does not fit in selected host network");
+          }
+      }
+    }
+  }
+
+  netSelection(e :MatSelectChange, l :number) {
+    //this.fieldsArray.at(l).patchValue({rack: e.value});
+    //console.log(this.dataSet.value)
+    //console.log(e.value);
+    const ip4ctrl = this.fieldsArray.at(l).get('ipv4') as FormControl;
+    
+    if (+e.value >= 0) {
+      
+      //Whether Map exists or not, we set it with value
+      networkSubnetMap.set(l, e.value);
+      
+      var netwk = this.netwArray.at(e.value).get('network')?.value
+      var sm = this.netwArray.at(e.value).get('subnet')?.value
+      var host = this.fieldsArray.at(l).get('ipv4')?.value;
+      
+      if (this.hostNetworkVerify(netwk, host, +sm)) {
+        this.clearForm(ip4ctrl)
+      } else {
+        this.makeFormDirty(ip4ctrl, "IPv4 does not fit in selected host network")
+      }
+    } else {
+      networkSubnetMap.set(l, "empty");
+      this.makeFormDirty(ip4ctrl, "IPv4 does not fit in selected host network")
+    }
+  }
+
+  blockip4SO(e: Event, l: number) {
+    //console.log((e.target as HTMLInputElement).value);
+    //console.log(l);
+
+    const ip4ctrl = this.fieldsSOArray.at(l).get('ipv4') as FormControl;
+    
+    //First time adding
+    if (!networkSubnetMapSO.has(l)) {
+      networkSubnetMapSO.set(l, "empty");
+      this.makeFormDirty(ip4ctrl, "IPv4 does not fit in selected host network");
+    //...already present, so an edit has taken place...
+    } else {
+      var val = networkSubnetMapSO.get(l)
+      switch (val) {
+        case "empty":
+          this.makeFormDirty(ip4ctrl, "IPv4 does not fit in selected host network");
+          break;
+        default:
+          var netwk = this.netwArray.at(val).get('network')?.value;
+          var sm = this.netwArray.at(val).get('subnet')?.value;
+          var host = this.fieldsSOArray.at(l).get('ipv4')?.value;
+          if (this.hostNetworkVerify(netwk, host, +sm)) {
+            this.clearForm(ip4ctrl);
+          } else {
+            this.makeFormDirty(ip4ctrl, "IPv4 does not fit in selected host network");
+          }
+      }
+    }
+  }
+
+  netSelectionSO(e :MatSelectChange, l :number) {
+    //this.fieldsArray.at(l).patchValue({rack: e.value});
+    //console.log(this.dataSet.value)
+    //console.log(e.value);
+    const ip4ctrl = this.fieldsSOArray.at(l).get('ipv4') as FormControl;
+    
+    if (+e.value >= 0) {
+      
+      //Whether Map exists or not, we set it with value
+      networkSubnetMapSO.set(l, e.value);
+      
+      var netwk = this.netwArray.at(e.value).get('network')?.value
+      var sm = this.netwArray.at(e.value).get('subnet')?.value
+      var host = this.fieldsSOArray.at(l).get('ipv4')?.value;
+      
+      if (this.hostNetworkVerify(netwk, host, +sm)) {
+        this.clearForm(ip4ctrl)
+      } else {
+        this.makeFormDirty(ip4ctrl, "IPv4 does not fit in selected host network")
+      }
+    } else {
+      networkSubnetMapSO.set(l, "empty");
+      this.makeFormDirty(ip4ctrl, "IPv4 does not fit in selected host network")
+    }
+  }
+
+  hostNetworkVerify(network: string, host: string, sm: number) :boolean {
+    //Split the octets
+    var hostIp :string[] = host.split(/\./)
+    if(hostIp[0] === "" || hostIp[1] === "" || hostIp[2] === "" || hostIp[3] === "") {
+      console.error("Invalid IP address")
+      return false
+    }
+    var netwIp :string[] = network.split(/\./)
+    if(netwIp[0] === "" || netwIp[1] === "" || netwIp[2] === "" || netwIp[3] === "") {
+      console.error("Invalid Network address")
+      return false
+    }
+    var test :string[] = []
+
+    //Bitwise AND serverIP with subnet = calculated network
+    var mask = this.cidrConverter(sm)
+    if (mask !== null) {
+      for (let i = 0; i <= 3; i++) {
+        test[i] = (+hostIp[i] & mask[i]).toString();
+      }
+    }
+
+    //Compare whether calculated (test) network address matches set network address
+    if (test.toString() === netwIp.toString()) {
+      return true
+    }
+
+    return false
+  }
+
+  //Return subnet as array. /24 as [255,255,255,0]
+  //TODO: consider sm.toString(2).padStart(8, '0')
+  cidrConverter(c: number): number[] | null {
+    var s = [0,0,0,0]
+    var main = (c / 8) | 0;
+    var minor = c % 8;
+    var indice = 8 - minor;
+
+    if (main > 4) {
+      console.error("Invalid cidr")
+      return null
+    }
+
+    if (main > 0) {
+      for (let i = 0; i < main; i++) {
+        s[i] = 255;
+      }
+      s[main] = 256 - (2 ** indice);
+
+    } else {
+      console.error("Invalid cidr");
+      return null
+    }
+
+    return s
+    
+  }
+
+  //Return cidr when DDN passed in
   subnetConverter(s :string) :number | null {
     const octets = s.split('.');
 
     if (octets.length !== 4) {
-        console.error("Invalid subnet mask format. Expected 'X.X.X.X'.");
+        //console.error("Invalid subnet mask format. Expected 'X.X.X.X'.");
         return null;
     }
-
-    let binaryMask = '';
-    for (const octet of octets) {
-        const num = parseInt(octet, 10);
-        if (isNaN(num) || num < 0 || num > 255) {
-            console.error("Invalid octet in subnet mask. Must be between 0 and 255.");
-            return null;
-        }
-        // Convert octet to 8-bit binary and pad with leading zeros if necessary
-        binaryMask += num.toString(2).padStart(8, '0');
-    }
-
-    let cidr = 0;
-    for (let i = 0; i < binaryMask.length; i++) {
-        if (binaryMask[i] === '1') {
-            cidr++;
-        } else {
-            // Once a '0' is encountered, all subsequent bits must also be '0' for a valid subnet mask
-            // This check can be added for stricter validation if needed
-            // if (binaryMask.substring(i).includes('1')) {
-            //     console.error("Invalid subnet mask: non-contiguous '1's.");
-            //     return null;
-            // }
-            break; 
-        }
-    }
+    
+   let cidr = 0;
+   for (let i = 0; i < 4; i++) {
+    var ind = 256 - +octets[i];
+    var pow = Math.log2(ind);
+    var v = 8 - pow;
+    cidr += v;
+  }
 
     return cidr;
   }

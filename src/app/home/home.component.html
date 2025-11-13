@@ -1,4 +1,4 @@
-<h1 [align]="'center'">MXONE Deployment file generator</h1>
+<h1 [align]="'center'" matTooltip="This is an SPA. All data remains in your local browser.">MXONE Deployment file generator</h1>
 
 <!--NEW MXONE SYSTEM-->
 
@@ -221,13 +221,13 @@
                   &nbsp;
                   <mat-form-field class="server-field">
                     <mat-label>Subnet</mat-label>
-                    <input matInput formControlName="subnet"/>
+                    <input matInput formControlName="subnet" (change)="subnetDoConversion($event, $index)"/>
                     <mat-hint align="start">Dotted-decimal or CIDR</mat-hint>
                   </mat-form-field>
                   &nbsp;
                   <mat-form-field class="server-field">
                     <mat-label>Gateway</mat-label>
-                    <input matInput formControlName="gateway"/>
+                    <input matInput formControlName="gateway" (change)="blockgw4($event, $index)"/>
                   </mat-form-field>
                   &nbsp;
                   <mat-form-field class="server-field">
@@ -286,15 +286,15 @@
                 &nbsp;
                 <mat-form-field class="server-field">
                   <mat-label>IPv4</mat-label>
-                  <input matInput formControlName="ipv4"/>
+                  <input matInput formControlName="ipv4" (change)="blockip4($event, j)"/>
                 </mat-form-field>
                 &nbsp;
                 <mat-form-field class="server-field">
                   <mat-label>Host Network (IPv4)</mat-label>
                   <mat-select matTooltip="Future will be used to verify IPv4 address matches network and gateway" (selectionChange)="netSelection($event, j)" required>
                     <mat-option>--</mat-option>
-                    @for (n of netArray(j, "ipv4"); track n) {
-                      <mat-option [value]="n">{{n}}</mat-option>
+                    @for (n of netArray(j, "ipv4"); track $index) {
+                      <mat-option [value]="$index">{{n}}</mat-option>
                     }
                   </mat-select>
                 </mat-form-field>
@@ -538,13 +538,13 @@
                   &nbsp;
                   <mat-form-field class="server-field">
                     <mat-label>Subnet</mat-label>
-                    <input matInput formControlName="subnet"/>
+                    <input matInput formControlName="subnet" (change)="subnetDoConversion($event, $index)"/>
                     <mat-hint align="start">Dotted-decimal or CIDR</mat-hint>
                   </mat-form-field>
                   &nbsp;
                   <mat-form-field class="server-field">
                     <mat-label>Gateway</mat-label>
-                    <input matInput formControlName="gateway"/>
+                    <input matInput formControlName="gateway" (change)="blockgw4($event, $index)"/>
                   </mat-form-field>
                   &nbsp;
                   <mat-form-field class="server-field">
@@ -604,15 +604,15 @@
                 &nbsp;
                 <mat-form-field class="server-field">
                   <mat-label>IPv4</mat-label>
-                  <input matInput formControlName="ipv4"/>
+                  <input matInput formControlName="ipv4" (change)="blockip4SO($event, j)"/>
                 </mat-form-field>
                 &nbsp;
                 <mat-form-field class="server-field">
                   <mat-label>Host Network (IPv4)</mat-label>
-                  <mat-select matTooltip="Future will be used to verify IPv4 address matches network and gateway" (selectionChange)="netSelection($event, j)" required>
+                  <mat-select matTooltip="Future will be used to verify IPv4 address matches network and gateway" (selectionChange)="netSelectionSO($event, j)" required>
                     <mat-option>--</mat-option>
-                    @for (n of netArray(j, "ipv4"); track n) {
-                      <mat-option [value]="n">{{n}}</mat-option>
+                    @for (n of netArray(j, "ipv4"); track $index) {
+                      <mat-option [value]="$index">{{n}}</mat-option>
                     }
                   </mat-select>
                 </mat-form-field>
