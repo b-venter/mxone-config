@@ -61,6 +61,8 @@ export class HomeComponent implements OnInit {
   @ViewChild('stepper') stepper!: MatStepper;
   @ViewChild('stepperOnly') stepperOnly!: MatStepper;
 
+  version = "0.0.3"
+
   output = ""
   outputSO = ""
   stepper_duration = "1000" //Animation timer
