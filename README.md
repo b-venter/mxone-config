@@ -5,8 +5,8 @@ This is a Single Page Application - all data is processed in the local browser. 
 
 ### Own deployment
 This is an Angular application.
-> git clone
-> cd
-> npm i && npm build
+> git clone  
+> cd  
+> npm i && npm build  
 1. Copy the built data to a webserver
 2. Configure the web server (see https://v17.angular.io/guide/deployment#fallback-configuration-examples)
