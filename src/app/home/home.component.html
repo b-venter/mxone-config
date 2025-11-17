@@ -1,4 +1,6 @@
-<h1 [align]="'center'" matTooltip="This is an SPA. All data remains in your local browser.">MXONE Deployment file generator v{{version}}</h1>
+<h1 [align]="'center'" matTooltip="This is an SPA. All data remains in your local browser.">MXONE Deployment file generator</h1>
+<h5 [align]="'center'"><i>(v{{version}})</i> - <a href="https://github.com/b-venter/mxone-config" target="_blank">Source</a></h5> 
+
 
 <!--NEW MXONE SYSTEM-->
 
@@ -11,6 +13,10 @@
 
             <ng-template matStepLabel>General settings</ng-template>
             <br>
+            <mat-slide-toggle [checked]="ipv6_test" matTooltip="Toggle IPv6 usage for site" [(ngModel)]="ipv6_test" [ngModelOptions]="{standalone: true}"></mat-slide-toggle>
+            &nbsp;
+            {{ipv6_test ? ipv6_true_text : ipv6_false_text}}
+            <br><br>
                 
             <mat-form-field class="server-field">
               <mat-label>System name</mat-label>
@@ -216,7 +222,7 @@
 
                   <mat-form-field class="server-field">
                     <mat-label>Network</mat-label>
-                    <input matInput formControlName="network"/>
+                    <input matInput matTooltip="Enter any IP address in range. The network value will be automatically calculated from the subnet." formControlName="network"/>
                   </mat-form-field>
                   &nbsp;
                   <mat-form-field class="server-field">
@@ -227,15 +233,17 @@
                   &nbsp;
                   <mat-form-field class="server-field">
                     <mat-label>Gateway</mat-label>
-                    <input matInput formControlName="gateway" (change)="blockgw4($event, $index)"/>
+                    <input matInput formControlName="gateway" (change)="blockgw($event, $index)"/>
                   </mat-form-field>
                   &nbsp;
                   <mat-form-field class="server-field">
                     <mat-label>Type</mat-label>
-                    <mat-select formControlName="type">
+                    <mat-select formControlName="type" (selectionChange)="networkTypeVerify($event, $index)">
                       <mat-option>--</mat-option>
                         <mat-option [value]="'ipv4'">ipv4</mat-option>
-                        <mat-option [value]="'ipv6'">ipv6</mat-option>
+                        @if(ipv6_test){
+                          <mat-option [value]="'ipv6'">ipv6</mat-option>
+                        }
                     </mat-select>
                   </mat-form-field>
 
@@ -286,24 +294,36 @@
                 &nbsp;
                 <mat-form-field class="server-field">
                   <mat-label>IPv4</mat-label>
-                  <input matInput formControlName="ipv4" (change)="blockip4($event, j)"/>
+                  <input matInput formControlName="ipv4" (change)="blockip4($event, j, 'ipv4')"/>
                 </mat-form-field>
                 &nbsp;
                 <mat-form-field class="server-field">
                   <mat-label>Host Network (IPv4)</mat-label>
-                  <mat-select matTooltip="Future will be used to verify IPv4 address matches network and gateway" (selectionChange)="netSelection($event, j)" required>
+                  <mat-select matTooltip="Select the host network this interface should belong to" (selectionChange)="netSelection($event, j, 'ipv4')" required>
                     <mat-option>--</mat-option>
                     @for (n of netArray(j, "ipv4"); track $index) {
-                      <mat-option [value]="$index">{{n}}</mat-option>
+                      <mat-option [value]="n.id">{{n.net}}</mat-option>
                     }
                   </mat-select>
                 </mat-form-field>
-                &nbsp;
-                <mat-form-field class="server-field">
-                  <mat-label>IPv6</mat-label>
-                  <input matInput formControlName="ipv6"/>
-                </mat-form-field>
                 <br>
+                @if(ipv6_test){
+                  <mat-form-field class="server-field">
+                    <mat-label>IPv6</mat-label>
+                    <input matInput formControlName="ipv6" [required]="ipv6_test" (change)="blockip4($event, j, 'ipv6')"/>
+                  </mat-form-field>
+                  &nbsp;
+                  <mat-form-field class="server-field">
+                    <mat-label>Host Network (IPv6)</mat-label>
+                    <mat-select matTooltip="Select the host network this interface should belong to" (selectionChange)="netSelection($event, j, 'ipv6')" required>
+                      <mat-option>--</mat-option>
+                      @for (n of netArray(j, "ipv6"); track $index) {
+                        <mat-option [value]="n.id">{{n.net}}</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                  <br>
+                }
 
                 <mat-form-field class="server-field">
                   <mat-label>Datacenter</mat-label>
@@ -356,7 +376,11 @@
                 &nbsp;
                 <mat-form-field class="server-field">
                   <mat-label>Cassandra IP</mat-label>
-                  <input matInput [readonly]="enableCass(j)" [required]="!enableCass(j)" type="string" matTooltip="If IPv6 is used, this address must be IPv6" formControlName="cassip"/>
+                  @if(!ipv6_test) {
+                    <input matInput [readonly]="enableCass(j)" [required]="!enableCass(j)" (change)="blockipCass($event, j, 'ipv4')" type="string" matTooltip="If IPv6 is used, this address must be IPv6" formControlName="cassip"/>
+                  } @else{
+                    <input matInput [readonly]="enableCass(j)" [required]="!enableCass(j)" (change)="blockipCass($event, j, 'ipv6')" type="string" matTooltip="If IPv6 is used, this address must be IPv6" formControlName="cassip"/>
+                  }
                 </mat-form-field>
   
               </div>
@@ -396,6 +420,7 @@
               <mat-error> <strong>Data has changed. Click update.</strong></mat-error>
             }
             <br>
+            <i>Note that formatting below is not an accurate representation. Copy or download to see actual formatting formatting.</i>
             <mat-form-field class="output-box">
               <textarea matInput cdkTextareaAutosize cdkAutosizeMinRows="10" cdkAutosizeMaxRows="50" [disabled]="checkDirty()" placeholder="Make changes in the previous fields, then click update here..." [value]="output">{{output}}</textarea>
             </mat-form-field>
@@ -426,6 +451,10 @@
 
             <ng-template matStepLabel>General settings</ng-template>
             <br>
+            <mat-slide-toggle [checked]="ipv6_test" matTooltip="Toggle IPv6 usage for site" [(ngModel)]="ipv6_test" [ngModelOptions]="{standalone: true}"></mat-slide-toggle>
+            &nbsp;
+            {{ipv6_test ? ipv6_true_text : ipv6_false_text}}
+            <br><br>
                 
             <mat-form-field class="server-field">
               <mat-label>System name</mat-label>
@@ -544,15 +573,17 @@
                   &nbsp;
                   <mat-form-field class="server-field">
                     <mat-label>Gateway</mat-label>
-                    <input matInput formControlName="gateway" (change)="blockgw4($event, $index)"/>
+                    <input matInput formControlName="gateway" (change)="blockgw($event, $index)"/>
                   </mat-form-field>
                   &nbsp;
                   <mat-form-field class="server-field">
                     <mat-label>Type</mat-label>
-                    <mat-select formControlName="type">
+                    <mat-select formControlName="type" (selectionChange)="networkTypeVerify($event, $index)">
                       <mat-option>--</mat-option>
                         <mat-option [value]="'ipv4'">ipv4</mat-option>
-                        <mat-option [value]="'ipv6'">ipv6</mat-option>
+                        @if(ipv6_test){
+                          <mat-option [value]="'ipv6'">ipv6</mat-option>
+                        }
                     </mat-select>
                   </mat-form-field>
 
@@ -604,24 +635,36 @@
                 &nbsp;
                 <mat-form-field class="server-field">
                   <mat-label>IPv4</mat-label>
-                  <input matInput formControlName="ipv4" (change)="blockip4SO($event, j)"/>
+                  <input matInput formControlName="ipv4" (change)="blockip4SO($event, j, 'ipv4')"/>
                 </mat-form-field>
                 &nbsp;
                 <mat-form-field class="server-field">
                   <mat-label>Host Network (IPv4)</mat-label>
-                  <mat-select matTooltip="Future will be used to verify IPv4 address matches network and gateway" (selectionChange)="netSelectionSO($event, j)" required>
+                  <mat-select matTooltip="Select the host network this interface should belong to" (selectionChange)="netSelectionSO($event, j, 'ipv4')" required>
                     <mat-option>--</mat-option>
                     @for (n of netArray(j, "ipv4"); track $index) {
-                      <mat-option [value]="$index">{{n}}</mat-option>
+                      <mat-option [value]="n.id">{{n.net}}</mat-option>
                     }
                   </mat-select>
                 </mat-form-field>
-                &nbsp;
-                <mat-form-field class="server-field">
-                  <mat-label>IPv6</mat-label>
-                  <input matInput formControlName="ipv6"/>
-                </mat-form-field>
                 <br>
+                @if(ipv6_test){
+                  <mat-form-field class="server-field">
+                    <mat-label>IPv6</mat-label>
+                    <input matInput formControlName="ipv6" [required]="ipv6_test" (change)="blockip4($event, j, 'ipv6')"/>
+                  </mat-form-field>
+                  &nbsp;
+                  <mat-form-field class="server-field">
+                    <mat-label>Host Network (IPv6)</mat-label>
+                    <mat-select matTooltip="Select the host network this interface should belong to" (selectionChange)="netSelectionSO($event, j, 'ipv6')" required>
+                      <mat-option>--</mat-option>
+                      @for (n of netArray(j, "ipv6"); track $index) {
+                        <mat-option [value]="n.id">{{n.net}}</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                  <br>
+                }
 
                 <mat-form-field class="server-field">
                   <mat-label>Datacenter</mat-label>
@@ -695,6 +738,7 @@
               <mat-error> <strong>Data has changed. Click update.</strong></mat-error>
             }
             <br>
+            <i>Note that formatting below is not an accurate representation. Copy or download to see actual formatting formatting.</i>
             <mat-form-field class="output-box">
               <textarea matInput cdkTextareaAutosize cdkAutosizeMinRows="10" cdkAutosizeMaxRows="50" [disabled]="checkDirtySO()" placeholder="Make changes in the previous fields, then click update here..." [value]="outputSO">{{outputSO}}</textarea>
             </mat-form-field>
@@ -715,6 +759,7 @@
       </mat-tab>
 
   </mat-tab-group>
+  
   
   
 

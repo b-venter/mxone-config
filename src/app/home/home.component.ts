@@ -1,4 +1,4 @@
-import { Component, ViewChild, OnInit } from '@angular/core';
+import { Component, ViewChild, OnInit, inject } from '@angular/core';
 
 import { FormControl, FormsModule, FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from "@angular/forms"
 
@@ -13,9 +13,12 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { CdkTextareaAutosize, TextFieldModule } from '@angular/cdk/text-field';
 import { STEPPER_GLOBAL_OPTIONS } from '@angular/cdk/stepper';
+import { config } from 'rxjs';
 
 interface qosElement {
   id: string;
@@ -27,8 +30,41 @@ interface platformElement {
   comment: string;
 }
 
-let networkSubnetMap = new Map();
-let networkSubnetMapSO = new Map();
+let networkSubnetMap4 = new Map();
+let networkSubnetMap4SO = new Map();
+let networkSubnetMap6 = new Map();
+let networkSubnetMap6SO = new Map();
+
+type networkArray = {
+  id: number;
+  net: string;
+}
+
+type ip4 = [
+  number, //1
+  number, //2
+  number, //3
+  number  //4
+];
+
+type ip6 = [
+  number, //1
+  number, //2
+  number, //3
+  number, //4
+  number, //5
+  number, //6
+  number, //7
+  number, //8
+  number, //9
+  number, //10
+  number, //11
+  number, //12
+  number, //13
+  number, //14
+  number, //15
+  number  //16
+];
 
 @Component({
   selector: 'app-home',
@@ -52,7 +88,8 @@ let networkSubnetMapSO = new Map();
     MatTooltipModule,
     TextFieldModule,
     FormsModule,
-    MatDividerModule
+    MatDividerModule,
+    MatSlideToggleModule
   ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'
@@ -61,8 +98,11 @@ export class HomeComponent implements OnInit {
   @ViewChild('stepper') stepper!: MatStepper;
   @ViewChild('stepperOnly') stepperOnly!: MatStepper;
 
-  version = "0.0.3"
+  version = "0.0.5"
 
+  ipv6_test = false
+  ipv6_true_text = "This site uses IPv6"
+  ipv6_false_text = "This site does not use IPv6"
   output = ""
   outputSO = ""
   stepper_duration = "1000" //Animation timer
@@ -223,6 +263,14 @@ export class HomeComponent implements OnInit {
     })
   }
 
+  private _snackBar = inject(MatSnackBar);
+
+  openSnackBar(message: string, action: string) {
+    this._snackBar.open(message, action, {
+      duration: 2000,
+    });
+  }
+
   ngOnInit(): void {
     this.addLim1();
     this.addDC1();
@@ -293,8 +341,8 @@ export class HomeComponent implements OnInit {
       host_name: ["", [Validators.required, Validators.pattern('[a-zA-Z0-9][a-zA-Z0-9-]*'), Validators.maxLength(63)]],
       ipv4: ["", Validators.required],
       ipv6: [""],
-      dc: ["", Validators.required], //TODO: add in general, then make available as a list to reduce typos
-      rack: ["", Validators.required], //TODO: add in general, then make available as a list to reduce typos and force only 2
+      dc: ["", Validators.required], 
+      rack: ["", Validators.required], 
       platform: [this.def_platform, Validators.required],
       lim: [false],
       limno: [{value: 0, disabled: false}],
@@ -304,6 +352,7 @@ export class HomeComponent implements OnInit {
     });
     this.fieldsArray.push(serverGroup)
     this.serverSet.markAsDirty();
+    this.openSnackBar("Server added", "Close");
   }
 
   addDC() {
@@ -319,6 +368,7 @@ export class HomeComponent implements OnInit {
     this.dcrArray.push(dc)
     this.datacenterSet.markAsDirty();
     this.harmonise_dirty();
+    this.openSnackBar("Datacenter added", "Close");
   }
 
   addNet() {
@@ -335,14 +385,17 @@ export class HomeComponent implements OnInit {
     this.netwArray.push(net) 
     this.networkSet.markAsDirty();
     this.harmonise_dirty();
+    this.openSnackBar("Network added", "Close");
   }
 
   rmServer(l :number) {  
     this.serverArray.splice(l, l);
     this.serverArray = [...this.serverArray]
     this.fieldsArray.removeAt(l)
-    networkSubnetMap.delete(l);
+    networkSubnetMap4.delete(l);
+    networkSubnetMap6.delete(l);
     this.serverSet.markAsDirty();
+    this.openSnackBar("Server removed", "Close");
   }
 
   rmDC(l :number) {
@@ -352,6 +405,7 @@ export class HomeComponent implements OnInit {
     this.dcrArray.removeAt(l)
     this.datacenterSet.markAsDirty();
     this.harmonise_dirty();
+    this.openSnackBar("Datacenter removed", "Close");
   }
 
   rmNet(l :number) {
@@ -361,6 +415,7 @@ export class HomeComponent implements OnInit {
     this.netwArray.removeAt(l) 
     this.networkSet.markAsDirty();
     this.harmonise_dirty();
+    this.openSnackBar("Network removed", "Close");
   }
 
   addServerOnly(x :boolean) {  
@@ -380,15 +435,21 @@ export class HomeComponent implements OnInit {
       platform: [this.def_platform, Validators.required],
     });
     this.fieldsSOArray.push(serverGroup)
+    
+    if (x) {
+      this.openSnackBar("Server added", "Close");
+    }
   }
 
   rmServerOnly(l :number) {  
     this.serverOnlyArray.splice(l, l);
     this.serverOnlyArray = [...this.serverOnlyArray]
     this.fieldsSOArray.removeAt(l)
-    networkSubnetMapSO.delete(l);
+    networkSubnetMap4SO.delete(l);
+    networkSubnetMap6SO.delete(l);
     this.serverSetServerOnly.markAsDirty();
     this.harmonise_dirty();
+    this.openSnackBar("Server removed", "Close");
   }
 
   checkDirty() :boolean {
@@ -664,13 +725,16 @@ export class HomeComponent implements OnInit {
     //console.log(this.dataSet.value)
   }
 
-  netArray(l :number, t :string) :string[]{
-    var nets :string[] = []
+  netArray(l :number, t :string) :networkArray[]{
+    var nets :networkArray[] = []
+    var i = 0;
     for (const n of this.netwArray.controls) {
       if (t == n.get('type')?.value) {
         const v = n.get('network')?.value + "/" + n.get('subnet')?.value;
-        nets.push(v)
+        
+        nets.push({id: i, net: v})
       }
+      i++;
     }
     return nets
   }
@@ -679,13 +743,19 @@ export class HomeComponent implements OnInit {
     var v = (e.target as HTMLInputElement).value
     var sm: number = 0;
     if (!isNaN(Number(v))) {
-      if (+v > 32) {
-        console.error("CIDR cannot be larger than 32");
-        this.netwArray.controls.at(i)?.patchValue({subnet: 32});
-        sm = 32;
-      } else {
+      if (+v > 128) {
+        console.error("CIDR cannot be larger than 128");
+        this.netwArray.controls.at(i)?.patchValue({type: "ipv6"});
+        this.netwArray.controls.at(i)?.patchValue({subnet: 128});
+        sm = 128;
+      } else if (+v > 32) {
+        this.netwArray.controls.at(i)?.patchValue({type: "ipv6"});
         sm = +v;
       }
+      else {
+        sm = +v;
+      }
+      //DDN format handled here
     } else {
       var s = this.subnetConverter(v);
       if (s !== null) {
@@ -698,22 +768,47 @@ export class HomeComponent implements OnInit {
     }
     
     //Set host network correctly once subnet known
-    //TODO: vewrbose code - see host verify
+    //TODO: verbose code - see host verify
     //TODO: handle if host address is null (i.e. user skipped host and entered subnet mask)
+    
     var test :string[] = []
     var host = this.netwArray.controls.at(i)?.get('network')?.value;
-    var hostIp :string[] = host.split(/\./)
-    var mask = this.cidrConverter(sm)
-    if (mask !== null && host !== null) {
-      for (let i = 0; i <= 3; i++) {
-        test[i] = (+hostIp[i] & mask[i]).toString();
-      }
-      
-      if (test.toString() !== host.toString()) {
-        var n = test[0] + '.' + test[1] + '.' + test[2] + '.' + test[3];
-        this.netwArray.controls.at(i)?.patchValue({network: n});
-      }
+    var type = this.testIpV(host);
 
+    switch(type) {
+      case "ipv4":
+        var hostIp :string[] = host.split(/\./);
+        var mask = this.cidrConverter(sm);
+        if (mask !== null && host !== null) {
+          for (let i = 0; i <= 3; i++) {
+            test[i] = (+hostIp[i] & mask[i]).toString();
+          }
+          
+          if (test.toString() !== host.toString()) {
+            var n = test[0] + '.' + test[1] + '.' + test[2] + '.' + test[3];
+            this.netwArray.controls.at(i)?.patchValue({network: n});
+          }
+        }
+        break;
+      case "ipv6":
+        var ddn = this.ip6to4(host);
+        var mask = this.cidrConverter(sm);
+        if (mask?.length === ddn.length) {
+          for (let i = 0; i <= 15; i++) {
+            test[i] = (+ddn[i] & mask[i]).toString();
+          }
+
+          if (test.toString() !== host.toString()) {
+            var n = this.ip4to6(ddn);
+            var n1 = <unknown>test;
+            var n2 = <ip6>n1;
+            var n3 = this.ip4to6(n2);
+            this.netwArray.controls.at(i)?.patchValue({network: n3});
+          }
+        }
+        break;
+      default:
+        console.error("Invalid network type. Not IPv4 or IPv6.")
     }
   }
 
@@ -726,7 +821,7 @@ export class HomeComponent implements OnInit {
     f.setErrors(null);
   }
 
-  blockgw4(e: Event, i: number) {
+  blockgw(e: Event, i: number) {
     //console.log((e.target as HTMLInputElement).value);
     //console.log(l);
 
@@ -744,160 +839,289 @@ export class HomeComponent implements OnInit {
 
   }
 
-  blockip4(e: Event, l: number) {
+  blockip4(e: Event, server: number, type: string) {
     //console.log((e.target as HTMLInputElement).value);
     //console.log(l);
 
-    const ip4ctrl = this.fieldsArray.at(l).get('ipv4') as FormControl;
+    const ip4ctrl = this.fieldsArray.at(server).get(type) as FormControl;
+
+    switch(type) {
+      case "ipv4":
+        var networkSubnetMap = networkSubnetMap4
+        break;
+      case "ipv6":
+        var networkSubnetMap = networkSubnetMap6
+        break;
+      default:
+        return;
+    }
     
     //First time adding
-    if (!networkSubnetMap.has(l)) {
-      networkSubnetMap.set(l, "empty");
-      this.makeFormDirty(ip4ctrl, "IPv4 does not fit in selected host network");
+    if (!networkSubnetMap.has(server)) {
+      networkSubnetMap.set(server, "empty");
+      this.makeFormDirty(ip4ctrl, "IP does not fit in selected host network");
     //...already present, so an edit has taken place...
     } else {
-      var val = networkSubnetMap.get(l)
+      var val = networkSubnetMap.get(server)
       switch (val) {
         case "empty":
-          this.makeFormDirty(ip4ctrl, "IPv4 does not fit in selected host network");
+          this.makeFormDirty(ip4ctrl, "IP does not fit in selected host network");
           break;
         default:
           var netwk = this.netwArray.at(val).get('network')?.value;
           var sm = this.netwArray.at(val).get('subnet')?.value;
-          var host = this.fieldsArray.at(l).get('ipv4')?.value;
+          var host = this.fieldsArray.at(server).get(type)?.value;
           if (this.hostNetworkVerify(netwk, host, +sm)) {
             this.clearForm(ip4ctrl);
           } else {
-            this.makeFormDirty(ip4ctrl, "IPv4 does not fit in selected host network");
+            this.makeFormDirty(ip4ctrl, "IP does not fit in selected host network");
           }
       }
     }
   }
 
-  netSelection(e :MatSelectChange, l :number) {
+  netSelection(e :MatSelectChange, server :number, type: string) {
     //this.fieldsArray.at(l).patchValue({rack: e.value});
     //console.log(this.dataSet.value)
     //console.log(e.value);
-    const ip4ctrl = this.fieldsArray.at(l).get('ipv4') as FormControl;
+    const ipctrl = this.fieldsArray.at(server).get(type) as FormControl;
+
+    switch(type) {
+      case "ipv4":
+        var networkSubnetMap = networkSubnetMap4
+        break;
+      case "ipv6":
+        var networkSubnetMap = networkSubnetMap6
+        break;
+      default:
+        return;
+    }
     
     if (+e.value >= 0) {
       
       //Whether Map exists or not, we set it with value
-      networkSubnetMap.set(l, e.value);
+      networkSubnetMap.set(server, e.value);
       
-      var netwk = this.netwArray.at(e.value).get('network')?.value
-      var sm = this.netwArray.at(e.value).get('subnet')?.value
-      var host = this.fieldsArray.at(l).get('ipv4')?.value;
+      var netwk = this.netwArray.at(e.value).get('network')?.value;
+      var sm = this.netwArray.at(e.value).get('subnet')?.value;
+      var host = this.fieldsArray.at(server).get(type)?.value;
+
+      console.log(netwk, sm, host);
+      
       
       if (this.hostNetworkVerify(netwk, host, +sm)) {
-        this.clearForm(ip4ctrl)
+        this.clearForm(ipctrl)
       } else {
-        this.makeFormDirty(ip4ctrl, "IPv4 does not fit in selected host network")
+        this.makeFormDirty(ipctrl, "IP does not fit in selected host network")
       }
     } else {
-      networkSubnetMap.set(l, "empty");
-      this.makeFormDirty(ip4ctrl, "IPv4 does not fit in selected host network")
+      networkSubnetMap.set(server, "empty");
+      this.makeFormDirty(ipctrl, "IP does not fit in selected host network")
     }
   }
 
-  blockip4SO(e: Event, l: number) {
+  blockipCass(e: Event, server: number, type: string) {
     //console.log((e.target as HTMLInputElement).value);
     //console.log(l);
 
-    const ip4ctrl = this.fieldsSOArray.at(l).get('ipv4') as FormControl;
+    const ipctrl = this.fieldsArray.at(server).get('cassip') as FormControl;
     
-    //First time adding
-    if (!networkSubnetMapSO.has(l)) {
-      networkSubnetMapSO.set(l, "empty");
-      this.makeFormDirty(ip4ctrl, "IPv4 does not fit in selected host network");
+    //Get network for this server from networkSubnetMap4 or networkSubnetMap6
+    switch(type){
+      case "ipv4":
+        var networkSubnetMap = networkSubnetMap4;
+        break;
+      case "ipv6":
+        var networkSubnetMap = networkSubnetMap6;
+        break;
+      default:
+        var networkSubnetMap = networkSubnetMap4;
+    }
+    
+    //Not present? The previous inputs have not been completed
+    if (!networkSubnetMap.has(server)) {
+      this.makeFormDirty(ipctrl, "IP does not fit in selected host network");
     //...already present, so an edit has taken place...
     } else {
-      var val = networkSubnetMapSO.get(l)
+      var val = networkSubnetMap.get(server);
       switch (val) {
         case "empty":
-          this.makeFormDirty(ip4ctrl, "IPv4 does not fit in selected host network");
+          this.makeFormDirty(ipctrl, "IP does not fit in selected host network");
           break;
         default:
           var netwk = this.netwArray.at(val).get('network')?.value;
           var sm = this.netwArray.at(val).get('subnet')?.value;
-          var host = this.fieldsSOArray.at(l).get('ipv4')?.value;
+          var host = this.fieldsArray.at(server).get('cassip')?.value;
           if (this.hostNetworkVerify(netwk, host, +sm)) {
-            this.clearForm(ip4ctrl);
+            this.clearForm(ipctrl);
           } else {
-            this.makeFormDirty(ip4ctrl, "IPv4 does not fit in selected host network");
+            this.makeFormDirty(ipctrl, "IP does not fit in selected host network");
           }
       }
     }
   }
 
-  netSelectionSO(e :MatSelectChange, l :number) {
+  blockip4SO(e: Event, server: number, type: string) {
+    //console.log((e.target as HTMLInputElement).value);
+    //console.log(l);
+
+    const ip4ctrl = this.fieldsSOArray.at(server).get(type) as FormControl;
+
+    switch(type) {
+      case "ipv4":
+        var networkSubnetMapSO = networkSubnetMap4SO;
+        break;
+      case "ipv6":
+        var networkSubnetMapSO = networkSubnetMap6SO;
+        break;
+      default:
+        return;
+    }
+    
+    //First time adding
+    if (!networkSubnetMapSO.has(server)) {
+      networkSubnetMapSO.set(server, "empty");
+      this.makeFormDirty(ip4ctrl, "IP does not fit in selected host network");
+    //...already present, so an edit has taken place...
+    } else {
+      var val = networkSubnetMapSO.get(server)
+      switch (val) {
+        case "empty":
+          this.makeFormDirty(ip4ctrl, "IP does not fit in selected host network");
+          break;
+        default:
+          var netwk = this.netwArray.at(val).get('network')?.value;
+          var sm = this.netwArray.at(val).get('subnet')?.value;
+          var host = this.fieldsSOArray.at(server).get(type)?.value;
+          if (this.hostNetworkVerify(netwk, host, +sm)) {
+            this.clearForm(ip4ctrl);
+          } else {
+            this.makeFormDirty(ip4ctrl, "IP does not fit in selected host network");
+          }
+      }
+    }
+  }
+
+  netSelectionSO(e :MatSelectChange, server :number, type: string) {
     //this.fieldsArray.at(l).patchValue({rack: e.value});
     //console.log(this.dataSet.value)
     //console.log(e.value);
-    const ip4ctrl = this.fieldsSOArray.at(l).get('ipv4') as FormControl;
+    const ipctrl = this.fieldsSOArray.at(server).get(type) as FormControl;
+
+    switch(type) {
+      case "ipv4":
+        var networkSubnetMapSO = networkSubnetMap4SO
+        break;
+      case "ipv6":
+        var networkSubnetMapSO = networkSubnetMap6SO
+        break;
+      default:
+        return;
+    }
     
     if (+e.value >= 0) {
       
       //Whether Map exists or not, we set it with value
-      networkSubnetMapSO.set(l, e.value);
+      networkSubnetMapSO.set(server, e.value);
       
       var netwk = this.netwArray.at(e.value).get('network')?.value
       var sm = this.netwArray.at(e.value).get('subnet')?.value
-      var host = this.fieldsSOArray.at(l).get('ipv4')?.value;
+      var host = this.fieldsSOArray.at(server).get(type)?.value;
       
       if (this.hostNetworkVerify(netwk, host, +sm)) {
-        this.clearForm(ip4ctrl)
+        this.clearForm(ipctrl)
       } else {
-        this.makeFormDirty(ip4ctrl, "IPv4 does not fit in selected host network")
+        this.makeFormDirty(ipctrl, "IP does not fit in selected host network")
       }
     } else {
-      networkSubnetMapSO.set(l, "empty");
-      this.makeFormDirty(ip4ctrl, "IPv4 does not fit in selected host network")
+      networkSubnetMapSO.set(server, "empty");
+      this.makeFormDirty(ipctrl, "IP does not fit in selected host network")
     }
   }
 
   hostNetworkVerify(network: string, host: string, sm: number) :boolean {
-    //Split the octets
-    var hostIp :string[] = host.split(/\./)
-    if(hostIp[0] === "" || hostIp[1] === "" || hostIp[2] === "" || hostIp[3] === "") {
-      console.error("Invalid IP address")
-      return false
-    }
-    var netwIp :string[] = network.split(/\./)
-    if(netwIp[0] === "" || netwIp[1] === "" || netwIp[2] === "" || netwIp[3] === "") {
-      console.error("Invalid Network address")
-      return false
-    }
-    var test :string[] = []
+    var type = this.testIpV(host);
 
-    //Bitwise AND serverIP with subnet = calculated network
-    var mask = this.cidrConverter(sm)
-    if (mask !== null) {
-      for (let i = 0; i <= 3; i++) {
-        test[i] = (+hostIp[i] & mask[i]).toString();
-      }
+    switch(type){
+      case "ipv4":
+        //Split the octets
+        var hostIp :string[] = host.split(/\./)
+        if(hostIp[0] === "" || hostIp[1] === "" || hostIp[2] === "" || hostIp[3] === "") {
+          console.error("Invalid IP address")
+          return false
+        }
+
+        var netwIp :string[] = network.split(/\./)
+        if(netwIp[0] === "" || netwIp[1] === "" || netwIp[2] === "" || netwIp[3] === "") {
+          console.error("Invalid Network address")
+          return false
+        }
+        var test :string[] = []
+
+        //Bitwise AND serverIP with subnet = calculated network
+        var mask = this.cidrConverter(sm)
+        if (mask !== null) {
+          for (let i = 0; i <= 3; i++) {
+            test[i] = (+hostIp[i] & mask[i]).toString();
+          }
+        }
+
+        //Compare whether calculated (test) network address matches set network address
+        if (test.toString() === netwIp.toString()) {
+          return true;
+        }
+        return false;
+      case "ipv6":
+        var ip6_ddn = this.ip6to4(host);
+        var mask = this.cidrConverter(sm);
+        var test :string[] = []
+
+        if (mask?.length === ip6_ddn.length) {
+          for (let i = 0; i <= 15; i++) {
+            test[i] = (+ip6_ddn[i] & mask[i]).toString();
+          }
+
+          var ip6x = <unknown>test;
+
+          if (this.ip4to6(<ip6>ip6x) === network.toString()) {
+            return true;
+          }
+        }
+        return false;
+      default:
+        return false;
     }
 
-    //Compare whether calculated (test) network address matches set network address
-    if (test.toString() === netwIp.toString()) {
-      return true
+    
+  }
+
+  //$event, form index
+  networkTypeVerify(e :MatSelectChange, n :number) {
+    var typeSelected = e.value;
+    var netSelected = this.netwArray.at(n).get('network')?.value;
+
+    const typeCtrl = this.netwArray.at(n).get('type') as FormControl;
+
+    if (this.testIpV(netSelected) === typeSelected) {
+      this.clearForm(typeCtrl);
+    } else {
+      this.makeFormDirty(typeCtrl, "Network type selected does not match IP address");
     }
 
-    return false
   }
 
   //Return subnet as array. /24 as [255,255,255,0]
-  //TODO: consider sm.toString(2).padStart(8, '0')
+  //TODO: Use types "ip4" and "ip6" created at top of file
   cidrConverter(c: number): number[] | null {
-    var s = [0,0,0,0]
+    if (c <= 32) {
+      var s = [0,0,0,0]
+    } else {
+      var s = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    }
+    
     var main = (c / 8) | 0;
     var minor = c % 8;
     var indice = 8 - minor;
-
-    if (main > 4) {
-      console.error("Invalid cidr")
-      return null
-    }
 
     if (main > 0) {
       for (let i = 0; i < main; i++) {
@@ -932,6 +1156,151 @@ export class HomeComponent implements OnInit {
   }
 
     return cidr;
+  }
+
+  testIpV(ip: string): string {
+    var v4 = ip.split(/\./).length;
+    var v6 = ip.split(/\:/).length;
+
+    if (v4 == 4 && v6 <= 1) {
+      return "ipv4"
+    } else if (v6 > 2 && v4 <= 1) {
+      return "ipv6"
+    } else if (v4 == 4 && v6 > 2) {
+      console.error("Appears to be ipv4-in-ipv6. Not supported")
+      return ""
+    } else {
+      console.error("Invalid IP address")
+      return ""
+    }
+  }
+
+  //Utilise current IPv4 logic for IPv6
+  ip6to4(ip: string): ip6 {
+    var segment = ip.split(/\:/);
+    var l = segment.length;
+
+    let out :ip6 =[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    
+    var k = 8 - l; //Number of 0 fields squashed together
+
+    var segInd = 0
+    for (let i = 0; i < l; i++) {
+
+      if (segment[i] === "") {
+        //Can only squash once - is this it?
+        if (k !== 0) {
+          for (let x = 0; x <= k; x++) {
+            segInd+= 2;
+          }
+        } else {
+          segInd+= 2;
+        }
+      } else {
+        var hex = segment[i].padStart(4, "0");
+        out[segInd] = parseInt(hex[0] + hex[1], 16);
+        segInd++;
+        out[segInd] = parseInt(hex[2] + hex[3], 16);
+        segInd++;
+      }
+    }
+      return out
+  }
+
+  ip4to6(ip: ip6): string {
+    //[254,128,0,0,0,0,0,0,10,143,195,255,254,65,77,102]
+    //fe80::a8f:c3ff:fe41:4d66/64
+    var v6 :string[] = []
+
+    //Decimal to Hex - automatically removes leading 0
+
+    var k = 0;
+    for(let i = 0; i < 8; i++) {
+      var a1 = +ip[k]; 
+      var a = a1.toString(16);
+      k++;
+      var b1 = +ip[k];
+      var b = b1.toString(16);
+      k++;
+      //Remove leading 0
+      if (a === "0") {
+        v6[i] = b;
+      } else {
+        v6[i] = a + b;
+      }
+    }
+
+    //Determine series of '0'
+
+    let zero = new Map();
+    var dataset :number[] = [];
+    var count = 0;
+    for(let i = 0; i < 8; i++) {
+
+      if(v6[i] === "0"){
+
+        //Add index of each sequence of '0'
+        dataset.push(i);
+
+      } else {
+
+        //Reset when no longer '0'
+        if(dataset.length > 0){
+          zero.set(count, dataset);
+          count++;
+          dataset = [];
+        }
+      }
+    }
+
+    //Cater for 0 series at end (e.g. indice 7)
+    if(dataset.length > 0){
+      zero.set(count, dataset);
+      count++;
+      dataset = [];
+    }
+
+    var most = {index: 0, length: 0};
+    zero.forEach((value, key) => {
+      if (value.length > most.length) {
+        most.index = key,
+        most.length = value.length
+      }
+    });
+
+    var zeroSeries = zero.get(most.index);
+
+    //Create IPv6
+    if (v6.length !== 8) {
+      console.error("Internal error with IPv6 conversion");
+    }
+    var ipv6: string = "";
+    for(let i = 0; i < 8;i++) {
+      if(v6[i] === '0') {
+        //Does the indice match ZeroSeries?
+        if (i === zeroSeries[0] ) {
+          ipv6 += ":"
+          
+          if (i === 0){ //First item in IPv6 is zero? Add an extra ":"
+            ipv6 += ":";
+          }
+
+          i += (zeroSeries.length - 1);
+        } else {
+          ipv6 += v6[i]; 
+          if(i !== 7) {
+            ipv6 += ":"
+          }
+        }
+      } else {
+        ipv6 += v6[i]
+        if(i !== 7) {
+          ipv6 += ":"
+        }
+      }
+    }
+
+    return ipv6
   }
 
   updateDC(i :number) {
