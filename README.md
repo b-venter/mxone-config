@@ -10,3 +10,19 @@ This is an Angular application.
 > npm i && npm build  
 1. Copy the built data to a webserver
 2. Configure the web server (see https://v17.angular.io/guide/deployment#fallback-configuration-examples)
+
+### Features  
+ - required information is enforced
+ - Set IPv6 for the entire system: will ensure an IPv6 address is required for each server, and for Cassandra where enabled.
+ - selection lists for QoS markers, Market Data, license and server platform
+ - Regex enforcing requirements/limitations for Domain, Data center, Rack and Hostname
+ - Network automatically calculated from subnet. Gateway confirmed/rejected as a valid value in the network.
+ - Server addition tying protection protection:
+  + select DC/Rack from menu list
+  + matching server IP address value with network address ensures valid IP addresses selected. (IPv4 and IPv6)
+  + enabling Cassandra checks whether IPv6 is used. If used, requires IPv6 address that matches IPv6 network. Else verifies IPv4 address matches.
+ - generates config file (mxoneInstallData.txt and/or mxoneAddServerData.txt) for easy copying, verification and deployment
+
+### TODO
+1. Uniqueness tests on hostname, IP addresses and LIM values.
+2. Option to add a backend server for storing/retrieving data per site.
