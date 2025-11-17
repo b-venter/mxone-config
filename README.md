@@ -26,3 +26,5 @@ This is an Angular application.
 ### TODO
 1. Uniqueness tests on hostname, IP addresses and LIM values.
 2. Option to add a backend server for storing/retrieving data per site.
+3. Add icon to "scroll to bottom" to indicate page extends beyond current screen.
+4. Add footer with version and source link.
