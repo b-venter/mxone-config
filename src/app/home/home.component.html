@@ -222,7 +222,7 @@
 
                   <mat-form-field class="server-field">
                     <mat-label>Network</mat-label>
-                    <input matInput matTooltip="Enter any IP address in range. The network value will be automatically calculated from the subnet." formControlName="network"/>
+                    <input matInput (change)="clearNet($index)" matTooltip="Enter any IP address in range. The network value will be automatically calculated from the subnet." formControlName="network"/>
                   </mat-form-field>
                   &nbsp;
                   <mat-form-field class="server-field">
