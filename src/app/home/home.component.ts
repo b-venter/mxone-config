@@ -98,7 +98,7 @@ export class HomeComponent implements OnInit {
   @ViewChild('stepper') stepper!: MatStepper;
   @ViewChild('stepperOnly') stepperOnly!: MatStepper;
 
-  version = "0.0.5"
+  version = "0.0.6"
 
   ipv6_test = false
   ipv6_true_text = "This site uses IPv6"
@@ -479,17 +479,33 @@ export class HomeComponent implements OnInit {
     var lic = "License type:           " + this.baseSet.controls['lic_type'].value
     var dns_array = [this.baseSet.controls['dns_srv1'].value, this.baseSet.controls['dns_srv2'].value, this.baseSet.controls['dns_srv3'].value]
     var dns = "DNS forwarders:         "
+    var dns_tracker = 0
     for (const d of dns_array) {
       if (d !== "") {
-        dns += d + ", "
+        dns_tracker++;
+        switch (dns_tracker) {
+          case 1:
+            dns += d
+            break;
+          default:
+            dns += ", " + d
+        }
       }
     }
 
     var dns_srch = "DNS search list:        "
     var dns_s = [this.baseSet.controls['dsn_srch1'].value, this.baseSet.controls['dsn_srch2'].value, this.baseSet.controls['dsn_srch3'].value, this.baseSet.controls['dsn_srch4'].value, this.baseSet.controls['dsn_srch5'].value]
+    var dnss_tracker = 0
     for (const ds of dns_s) {
       if (ds !== "") {
-        dns_srch += ds + ", "
+        dnss_tracker++;
+        switch(dnss_tracker) {
+          case 1:
+            dns_srch += ds;
+            break;
+          default:
+            dns_srch += ", " + ds
+        }
       }
     }
 
