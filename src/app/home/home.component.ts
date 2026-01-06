@@ -98,7 +98,7 @@ export class HomeComponent implements OnInit {
   @ViewChild('stepper') stepper!: MatStepper;
   @ViewChild('stepperOnly') stepperOnly!: MatStepper;
 
-  version = "0.0.6"
+  version = "0.0.7"
 
   ipv6_test = false
   ipv6_true_text = "This site uses IPv6"
@@ -835,6 +835,13 @@ export class HomeComponent implements OnInit {
 
   clearForm(f: FormControl){
     f.setErrors(null);
+  }
+
+  clearNet(i: number) {
+    const gw = this.netwArray.at(i).get('gateway') as FormControl;
+    const sm = this.netwArray.at(i).get('subnet') as FormControl;
+    sm.reset();
+    gw.reset();
   }
 
   blockgw(e: Event, i: number) {
