@@ -40,6 +40,7 @@ type networkArray = {
   net: string;
 }
 
+//DDN octets == 4 (32 bit)
 type ip4 = [
   number, //1
   number, //2
@@ -47,6 +48,7 @@ type ip4 = [
   number  //4
 ];
 
+//DDN octets = 16 (128 bit)
 type ip6 = [
   number, //1
   number, //2
@@ -98,7 +100,7 @@ export class HomeComponent implements OnInit {
   @ViewChild('stepper') stepper!: MatStepper;
   @ViewChild('stepperOnly') stepperOnly!: MatStepper;
 
-  version = "0.0.7"
+  version = "0.0.8"
 
   ipv6_test = false
   ipv6_true_text = "This site uses IPv6"
@@ -231,7 +233,7 @@ export class HomeComponent implements OnInit {
       system_name: [""],
       version: ["0.2"],
       mxone_domain: ["", [Validators.required, Validators.pattern('[a-zA-Z0-9.-]*')]], //
-      ntp: ["", Validators.required],
+      ntp: ["", [Validators.required, Validators.pattern('[a-zA-Z0-9.-]*')]],
       qos_media: [this.def_qos_media, Validators.required],
       qos_sig: [this.def_qos_sig, Validators.required],
       mrkt_data: [this.def_mrkt_data, Validators.required],
@@ -299,7 +301,7 @@ export class HomeComponent implements OnInit {
   addLim1() {
     const serverGroup = this.ds.group({
       host_name: ["", [Validators.required, Validators.pattern('[a-zA-Z0-9][a-zA-Z0-9-]*'), Validators.maxLength(63)]],
-      ipv4: ["", Validators.required],
+      ipv4: ["", [Validators.required, Validators.pattern('[0-9.]*')]],
       ipv6: [""],
       dc: ["", Validators.required],
       rack: ["", Validators.required],
@@ -755,21 +757,40 @@ export class HomeComponent implements OnInit {
     return nets
   }
 
+  makeFormDirty(f: FormControl, e: string){
+    f.setErrors({customError: true, message: e})
+    f.markAsTouched();
+  }
+
+  clearForm(f: FormControl){
+    f.setErrors(null);
+  }
+
+  clearNet(i: number) {
+    const gw = this.netwArray.at(i).get('gateway') as FormControl;
+    const sm = this.netwArray.at(i).get('subnet') as FormControl;
+    sm.reset();
+    gw.reset();
+  }
+
   subnetDoConversion(e: Event, i: number){
     var v = (e.target as HTMLInputElement).value
     var sm: number = 0;
     if (!isNaN(Number(v))) {
-      if (+v > 128) {
+      if (+v > 128 && this.ipv6_test) {
         console.error("CIDR cannot be larger than 128");
         this.netwArray.controls.at(i)?.patchValue({type: "ipv6"});
         this.netwArray.controls.at(i)?.patchValue({subnet: 128});
         sm = 128;
-      } else if (+v > 32) {
+      } else if (+v > 32 && this.ipv6_test) {
         this.netwArray.controls.at(i)?.patchValue({type: "ipv6"});
         sm = +v;
       }
-      else {
+      else if (+v <= 32) {
         sm = +v;
+      }
+      else {
+        return
       }
       //DDN format handled here
     } else {
@@ -826,22 +847,6 @@ export class HomeComponent implements OnInit {
       default:
         console.error("Invalid network type. Not IPv4 or IPv6.")
     }
-  }
-
-  makeFormDirty(f: FormControl, e: string){
-    f.setErrors({customError: true, message: e})
-    f.markAsTouched();
-  }
-
-  clearForm(f: FormControl){
-    f.setErrors(null);
-  }
-
-  clearNet(i: number) {
-    const gw = this.netwArray.at(i).get('gateway') as FormControl;
-    const sm = this.netwArray.at(i).get('subnet') as FormControl;
-    sm.reset();
-    gw.reset();
   }
 
   blockgw(e: Event, i: number) {
@@ -1182,6 +1187,16 @@ export class HomeComponent implements OnInit {
   }
 
   testIpV(ip: string): string {
+    const invalid4: RegExp = /[^0-9.]/g;
+    const invalid6: RegExp = /[^a-fA-F0-9:]/g;
+    var valid4 = invalid4.exec(ip);
+    var valid6 = invalid6.exec(ip);
+
+    if (valid4 !== null && valid6 !== null) {
+      //Neither clean IPv4 nor clean ipv6
+      return ""
+    }
+
     var v4 = ip.split(/\./).length;
     var v6 = ip.split(/\:/).length;
 

@@ -1,4 +1,36 @@
 /* You can add global styles to this file, and also import other style files */
+@use '@angular/material' as mat;
 
-html, body { height: 100%; }
+
+html, body { 
+    height: 100%; 
+    background-color: #faf9fd;
+}
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+app-home {
+    @include mat.tabs-overrides((
+      active-indicator-height: 3px,
+      active-indicator-shape: 10px 10px 10px 10px,
+      inactive-hover-label-text-color: white
+    ));
+  }
+mat-tab-group .mdc-tab {
+    border-top-right-radius: 50px;
+    border-top-left-radius: 50px;
+    border-top-width: thick;
+    border: #e0e0e000 solid thick;
+    border-bottom: none;
+    background-color: #e0e0e093;
+    --mat-sys-hover-state-layer-opacity: 0;
+}
+
+mat-tab-group .mdc-tab--active {
+    background-color: #005dbb4b;
+    //#e0e0e0;
+    border: #005dbb00 solid thick;
+}
+
+mat-tab-group .mdc-tab:hover {
+    background-color: #005dbbb2;
+}

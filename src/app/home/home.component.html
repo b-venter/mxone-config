@@ -4,7 +4,7 @@
 
 <!--NEW MXONE SYSTEM-->
 
-<mat-tab-group dynamicHeight>
+<mat-tab-group dynamicHeight animationDuration="400ms">
     <mat-tab label="New MXONE 8.0 System">
       
       <mat-vertical-stepper [linear]="stepper_linear" #stepper [animationDuration]="stepper_duration">
@@ -294,7 +294,7 @@
                 &nbsp;
                 <mat-form-field class="server-field">
                   <mat-label>IPv4</mat-label>
-                  <input matInput formControlName="ipv4" (change)="blockip4($event, j, 'ipv4')"/>
+                  <input matInput formControlName="ipv4" (change)="blockip4($event, j, 'ipv4')" matTooltip="IP address only, no CIDR"/>
                 </mat-form-field>
                 &nbsp;
                 <mat-form-field class="server-field">
@@ -440,9 +440,9 @@
       </mat-vertical-stepper>
     </mat-tab>
 
-<!----------------->
-<!--MXONE SERVERS-->
-<!----------------->
+<!--------------------->
+<!--MXONE SERVERS ADD-->
+<!--------------------->
 
     <mat-tab label="Add MXONE 8.0 Server">
       <mat-vertical-stepper [linear]="stepper_linear" #stepperOnly [animationDuration]="stepper_duration">
@@ -562,7 +562,7 @@
 
                   <mat-form-field class="server-field">
                     <mat-label>Network</mat-label>
-                    <input matInput formControlName="network"/>
+                    <input matInput (change)="clearNet($index)" matTooltip="Enter any IP address in range. The network value will be automatically calculated from the subnet." formControlName="network"/>
                   </mat-form-field>
                   &nbsp;
                   <mat-form-field class="server-field">
@@ -635,7 +635,7 @@
                 &nbsp;
                 <mat-form-field class="server-field">
                   <mat-label>IPv4</mat-label>
-                  <input matInput formControlName="ipv4" (change)="blockip4SO($event, j, 'ipv4')"/>
+                  <input matInput formControlName="ipv4" (change)="blockip4SO($event, j, 'ipv4')" matTooltip="IP address only, no CIDR"/>
                 </mat-form-field>
                 &nbsp;
                 <mat-form-field class="server-field">
